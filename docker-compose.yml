@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  lspdsecretary:
+    image: node:24
+    container_name: lspdsecretary
+    working_dir: /dist/index.js
+    restart: unless-stopped
+    volumes:
+      - ./bot:/usr/src/app
+    command: sh -c "git pull && npm install && node index.js"
