@@ -53,12 +53,12 @@ export const run = async ({
   if (!guild) {
     await interaction.reply({
       content: "❌ Tento příkaz lze použít pouze na serveru.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const members = await guild.members.fetch();
   const membersWithRole = members.filter((m: GuildMember) =>
