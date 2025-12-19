@@ -56,8 +56,12 @@ export const data = new SlashCommandBuilder()
       .setDescription("Office type")
       .setRequired(true)
       .addChoices(
-        { name: "Sgt.", value: "Sgt." },
-        { name: "Cpt.", value: "Cpt." }
+        { name: "Sergeant Office (MRPD)", value: "Sergeant Office (MRPD)" },
+        { name: "Captain Office (MRPD)", value: "Captain Office (MRPD)" },
+        { name: "Chief Office (VSPD)", value: "Captain Office (VSPD)" },
+        { name: "Commander Office (VSPD)", value: "Captain Office (VSPD)" },
+        { name: "Captain Office (VSPD)", value: "Captain Office (VSPD)" },
+        { name: "Sergeant Office (VSPD)", value: "Sergeant Office (VSPD)" }
       )
   );
 
@@ -165,3 +169,4 @@ export const options: CommandOptions = {
   devOnly: false,
   deleted: false,
 };
+
