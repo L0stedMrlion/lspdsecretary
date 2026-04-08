@@ -8,22 +8,12 @@ import {
 	Client,
 	TextChannel,
 	Role,
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
 } from "discord.js";
 
-const AUTHORIZED_ROLES: string[] = [
-	"1350408652200345610",
-	"1350408503553953802",
-	"1350408400437121025",
-	"1350408291796127754",
-	"1350407933380395008",
-	"1350407752568148071",
-	"1350407562025242705",
-	"1350407478386495518",
-	"1350407031856824381",
-	"1350406877137342464",
-	"1350406635826315315",
-	"1350406101178519647",
-];
+import { AUTHORIZED_ROLES, LSPD_LOGO_URL } from "../constants";
 
 const CPZ_CHANNELS: Record<string, string> = {
 	CPZ1: "1485091412763607051",
@@ -158,13 +148,22 @@ export const run = async ({
 
 	const thumbnailComponent = new ThumbnailBuilder({
 		media: {
-			url: "https://cdn.discordapp.com/attachments/1287133753356980329/1369380612921757766/LSPD1.png?ex=68603493&is=685ee313&hm=715794e0df178e34b0c31252e01d713f40d7f924dc2caf15d956bae6b7929ae0&",
+			url: LSPD_LOGO_URL,
 		},
 	});
 
 	const sectionComponent = new SectionBuilder()
 		.addTextDisplayComponents(textComponent)
 		.setThumbnailAccessory(thumbnailComponent);
+
+	const resolvedButton = new ButtonBuilder()
+		.setCustomId("cpz_resolve")
+		.setLabel("✅ Resolved")
+		.setStyle(ButtonStyle.Success);
+
+	const actionRow1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+		resolvedButton,
+	);
 
 	try {
 		const channel = (await client.channels.fetch(
@@ -173,7 +172,7 @@ export const run = async ({
 		if (channel) {
 			await channel.send({
 				flags: MessageFlags.IsComponentsV2,
-				components: [sectionComponent],
+				components: [sectionComponent, actionRow1],
 			});
 		}
 
