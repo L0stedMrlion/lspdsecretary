@@ -49,7 +49,7 @@ export const data = new SlashCommandBuilder()
 			.setDescription('Office type')
 			.setRequired(true)
 			.addChoices(
-				{ name: 'Chief Office', value: 'Captain Office' },
+				{ name: 'Chief Office', value: 'Chief Office' },
 				{ name: 'Commander Office', value: 'Captain Office' },
 				{ name: 'Captain Office', value: 'Captain Office' },
 				{ name: 'Sergeant Office', value: 'Sergeant Office' }
