@@ -27,24 +27,24 @@ interface CommandOptions {
 }
 
 export const data = new SlashCommandBuilder()
-	.setName("vyhazov")
-	.setDescription("Odešle oficiální oznámení o ukončení pracovního poměru")
+	.setName("dismissal")
+	.setDescription("Sends an official notice of employment termination")
 	.addUserOption((option) =>
 		option
 			.setName("user")
-			.setDescription("Hráč, kterému bude odesláno oznámení")
+			.setDescription("The player to whom the notice will be sent")
 			.setRequired(true),
 	)
 	.addStringOption((option) =>
 		option
 			.setName("reason")
-			.setDescription("Důvod ukončení pracovního poměru")
+			.setDescription("The reason for termination of employment")
 			.setRequired(true),
 	)
 	.addStringOption((option) =>
 		option
-			.setName("signiture")
-			.setDescription("Tvůj podpis (např. Jméno a Hodnost)")
+			.setName("signature")
+			.setDescription("Your signature (e.g., Name and Rank)")
 			.setRequired(true),
 	);
 
@@ -70,7 +70,7 @@ export const run = async ({
 
 	if (!hasRole) {
 		await interaction.reply({
-			content: "❌ Nemáš oprávnění k použití tohoto příkazu!",
+			content: "❌ You do not have permission to use this command!",
 			flags: MessageFlags.Ephemeral,
 		});
 		return;
@@ -80,30 +80,30 @@ export const run = async ({
 
 	const targetUser: User = interaction.options.getUser("user", true);
 	const reason: string = interaction.options.getString("reason", true);
-	const signiture: string = interaction.options.getString("signiture", true);
+	const signature: string = interaction.options.getString("signature", true);
 
-	const embedContent = `# 👮 LSPD - Ukončení pracovního poměru
+	const embedContent = `# 👮 LSPD - Termination of Employment
 
-**Fr.:** <@${interaction.user.id}>
-**To.:** <@${targetUser.id}>
-**Subj.:** Ukončení pracovního poměru
+**From:** <@${interaction.user.id}>
+**To:** <@${targetUser.id}>
+**Subj.:** Termination of Employment
 
-Dobrý den, <@${targetUser.id}>,
+Hello <@${targetUser.id}>,
 
-tímto Vám oficiálně oznamujeme **ukončení Vašeho pracovního poměru** u Los Santos Police Department s okamžitou platností.
+we hereby officially notify you of the **termination of your employment** with the Los Santos Police Department, effective immediately.
 
-### 📝 DŮVOD UKONČENÍ
+### 📝 REASON FOR TERMINATION
 > ${reason}
 
-S pozdravem,
-**${signiture}**
+Sincerely,
+**${signature}**
 
 👮 **Los Santos Police Department**
 
 ---
-### 🧡 OOC Dodatek
+### 🧡 OOC Addendum
 
-Vaše postava byla smazána a tato akce byla definitivní a nelze navrátit. Kdykoliv se můžete na projekt vrátit a pokračovat v RP za jinou postavu. Níže vám zasíláme Discord, pokud by jste se rozhodl vrátit. Děkujeme za pochopení a čas, který jste nám věnoval 💝✨
+Your character has been deleted; this action is final and irreversible. You are welcome to return to the project at any time and continue RP with a different character. We are providing our Discord link below should you choose to return. Thank you for your understanding and for the time you've dedicated to us 💝✨
 `;
 
 	const textComponent = new TextDisplayBuilder().setContent(embedContent);
@@ -141,26 +141,26 @@ Vaše postava byla smazána a tato akce byla definitivní a nelze navrátit. Kdy
 				);
 				if (targetMember) {
 					if (targetMember.kickable) {
-						await targetMember.kick(`LSPD Vyhazov: ${reason}`);
-						kickStatus = " a uživatel byl vyhozen ze serveru";
+						await targetMember.kick(`LSPD Termination: ${reason}`);
+						kickStatus = " and the user has been kicked from the server";
 					} else {
 						kickStatus =
-							" (uživatele však nebylo možné vyhodit - pravděpodobně má vyšší roli)";
+							" (however, the user could not be kicked - they likely have a higher role)";
 					}
 				}
 			} catch (fetchError) {
-				kickStatus = " (uživatel již pravděpodobně není na serveru)";
+				kickStatus = " (user is likely no longer on the server)";
 			}
 		}
 
 		await interaction.editReply({
-			content: `✅ Oznámení o vyhazovu bylo úspěšně odesláno uživateli <@${targetUser.id}>${kickStatus}.`,
+			content: `✅ Termination notice successfully sent to <@${targetUser.id}>${kickStatus}.`,
 		});
 	} catch (error) {
 		console.error("Error sending dismissal DM:", error);
 		await interaction.editReply({
 			content:
-				"❌ Nepodařilo se odeslat zprávu uživateli (pravděpodobně má vypnuté DM), tudíž nebyl ani vyhozen.",
+				"❌ Failed to send message to user (they likely have DMs disabled), so they were not kicked.",
 		});
 	}
 };
