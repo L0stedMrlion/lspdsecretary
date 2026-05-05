@@ -28,7 +28,7 @@ interface CommandOptions {
 
 export const data = new SlashCommandBuilder()
 	.setName("vyhazov")
-    .setDescription("Sends an official notice of employment termination")
+	.setDescription("Sends an official notice of employment termination")
 	.addUserOption((option) =>
 		option
 			.setName("user")
@@ -80,7 +80,7 @@ export const run = async ({
 
 	const targetUser: User = interaction.options.getUser("user", true);
 	const reason: string = interaction.options.getString("reason", true);
-	const signiture: string = interaction.options.getString("signiture", true);
+	const signature: string = interaction.options.getString("signature", true);
 
 	const embedContent = `# 👮 LSPD - Ukončení pracovního poměru
 
@@ -96,7 +96,7 @@ tímto Vám oficiálně oznamujeme **ukončení Vašeho pracovního poměru** u 
 > ${reason}
 
 S pozdravem,
-**${signiture}**
+**${signature}**
 
 👮 **Los Santos Police Department**
 
