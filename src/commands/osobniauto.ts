@@ -100,7 +100,7 @@ tímto Vám oznamujeme, že Vaše vozidlo je připraveno k vyzvednutí.
 
 Vozidlo si vyzvednete zadáním příkazu \`/claimvehicle\` s využitím výše uvedeného kódu. Poté jej naleznete ve své garáži. V případě komplikací mě neváhejte kontaktovat.
 
-S pozdravem,
+S pozdravem
 <@${interaction.user.id}>
 
 👮 **Los Santos Police Department**`;
