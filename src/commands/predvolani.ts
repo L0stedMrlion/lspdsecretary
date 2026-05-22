@@ -53,7 +53,8 @@ export const data = new SlashCommandBuilder()
 				{ name: 'Commander Office', value: 'Captain Office' },
 				{ name: 'Captain Office', value: 'Captain Office' },
 				{ name: 'Sergeant Office', value: 'Sergeant Office' },
-                { name: 'Metro Office', value: 'Metro Office' }
+                { name: 'Metro Office', value: 'Metro Office' },
+				{ name: 'Detective Office', value: 'Detective Office' }
 			)
 	);
 
