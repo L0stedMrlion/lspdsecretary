@@ -42,6 +42,8 @@ const CPZ_CHANNELS: Record<string, string> = {
   CPZ10SW: "1512828988567982080",
   CPZ11SW: "1512829013670760458",
   CPZ12SW: "1512829042649206866",
+  CPZGOV: "1512973820850602015",
+  CPZAIR: "1512973862135136366",
 };
 
 interface CommandRunParams {
@@ -57,11 +59,11 @@ interface CommandOptions {
 
 export const data = new SlashCommandBuilder()
   .setName("cpzreport")
-  .setDescription("Submits a CPZ (Cell) report")
+  .setDescription("Submits a VSPD or special CPZ report")
   .addStringOption((option) =>
     option
       .setName("cpz")
-      .setDescription("Select the CPZ cell")
+      .setDescription("Select a VSPD, Government, or Air Base CPZ cell")
       .setRequired(true)
       .addChoices(
         { name: "CPZ 1 (VSPD)", value: "CPZ1VS" },
@@ -78,18 +80,8 @@ export const data = new SlashCommandBuilder()
         { name: "CPZ 12 (VSPD)", value: "CPZ12VS" },
         { name: "CPZ 13 (VSPD)", value: "CPZ13VS" },
         { name: "CPZ 14 (VSPD)", value: "CPZ14VS" },
-        { name: "CPZ 1 (SWAT Operations)", value: "CPZ1SW" },
-        { name: "CPZ 2 (SWAT Operations)", value: "CPZ2SW" },
-        { name: "CPZ 3 (SWAT Operations)", value: "CPZ3SW" },
-        { name: "CPZ 4 (SWAT Operations)", value: "CPZ4SW" },
-        { name: "CPZ 5 (SWAT Operations)", value: "CPZ5SW" },
-        { name: "CPZ 6 (SWAT Operations)", value: "CPZ6SW" },
-        { name: "CPZ 7 (SWAT Operations)", value: "CPZ7SW" },
-        { name: "CPZ 8 (SWAT Operations)", value: "CPZ8SW" },
-        { name: "CPZ 9 (SWAT Operations)", value: "CPZ9SW" },
-        { name: "CPZ 10 (SWAT Operations)", value: "CPZ10SW" },
-        { name: "CPZ 11 (SWAT Operations)", value: "CPZ11SW" },
-        // { name: "CPZ 12 (SWAT Operations)", value: "CPZ12SW" }, // Nějaká random Discord limitace...????
+        { name: "CPZ (Government)", value: "CPZGOV" },
+        { name: "CPZ (LSPD Air Base)", value: "CPZAIR" },
       ),
   )
   .addStringOption((option) =>
