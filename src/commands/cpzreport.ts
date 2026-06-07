@@ -42,8 +42,6 @@ const CPZ_CHANNELS: Record<string, string> = {
   CPZ10SW: "1512828988567982080",
   CPZ11SW: "1512829013670760458",
   CPZ12SW: "1512829042649206866",
-  CPZGOV: "1512829077676101704",
-  CPZAIRB: "1512829136177987755",
 };
 
 interface CommandRunParams {
@@ -91,13 +89,14 @@ export const data = new SlashCommandBuilder()
         { name: "CPZ 9 (SWAT Operations)", value: "CPZ9SW" },
         { name: "CPZ 10 (SWAT Operations)", value: "CPZ10SW" },
         { name: "CPZ 11 (SWAT Operations)", value: "CPZ11SW" },
-        { name: "CPZ 12 (SWAT Operations)", value: "CPZ12SW" },
-        { name: "CPZ (Government)", value: "CPZGOV" },
-        { name: "CPZ (LSPD Air Base)", value: "CPZAIRB" },
+        // { name: "CPZ 12 (SWAT Operations)", value: "CPZ12SW" }, // Nějaká random Discord limitace...????
       ),
   )
   .addStringOption((option) =>
-    option.setName("name").setDescription("Prisoner's name").setRequired(true),
+    option
+      .setName("name")
+      .setDescription("Hold Person's Name")
+      .setRequired(true),
   )
   .addStringOption((option) =>
     option
