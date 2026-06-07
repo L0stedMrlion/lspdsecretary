@@ -1,134 +1,162 @@
 import {
-	MessageFlags,
-	TextDisplayBuilder,
-	ThumbnailBuilder,
-	SectionBuilder,
-	SlashCommandBuilder,
-	ChatInputCommandInteraction,
-	Client,
-	TextChannel,
-	Role,
-	ActionRowBuilder,
-	ButtonBuilder,
-	ButtonStyle,
+  MessageFlags,
+  TextDisplayBuilder,
+  ThumbnailBuilder,
+  SectionBuilder,
+  SlashCommandBuilder,
+  ChatInputCommandInteraction,
+  Client,
+  TextChannel,
+  Role,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
 } from "discord.js";
 
 import { AUTHORIZED_ROLES, LSPD_LOGO_URL } from "../constants";
 
 const CPZ_CHANNELS: Record<string, string> = {
-	CPZ1: "1485091412763607051",
-	CPZ2: "1485091432040628354",
-	CPZ3: "1485091451049218168",
-	CPZ4: "1485091476114378795",
-	CPZ5: "1485091490781859951",
-	CPZ6: "1485091515826049145",
-	CPZ7: "1485091531533582346",
-	CPZ8: "1485091556896542870",
-	CPZ9: "1485091571887112373",
-	CPZ10: "1485091587905163294",
-	CPZ11: "1485091602337628252",
-	CPZ12: "1485091621707186306",
-	CPZ13: "1485091652703096842",
-	CPZ14: "1485091681140478003",
+  CPZ1VS: "1485091412763607051",
+  CPZ2SV: "1485091432040628354",
+  CPZ3VS: "1485091451049218168",
+  CPZ4VS: "1485091476114378795",
+  CPZ5VS: "1485091490781859951",
+  CPZ6VS: "1485091515826049145",
+  CPZ7VS: "1485091531533582346",
+  CPZ8VS: "1485091556896542870",
+  CPZ9VS: "1485091571887112373",
+  CPZ10VS: "1485091587905163294",
+  CPZ11VS: "1485091602337628252",
+  CPZ12VS: "1485091621707186306",
+  CPZ13VS: "1485091652703096842",
+  CPZ14VS: "1485091681140478003",
+  CPZ1SW: "1512828344016568591",
+  CPZ2SW: "1512828784431206561",
+  CPZ3SW: "1512828817486647437",
+  CPZ4SW: "1512828842618912808",
+  CPZ5SW: "1512828862818553957",
+  CPZ6SW: "1512828892547776674",
+  CPZ7SW: "1512828923342356510",
+  CPZ8SW: "1512828947996348548",
+  CPZ9SW: "1512828967575355573",
+  CPZ10SW: "1512828988567982080",
+  CPZ11SW: "1512829013670760458",
+  CPZ12SW: "1512829042649206866",
+  CPZGOV: "1512829077676101704",
+  CPZAIRB: "1512829136177987755",
 };
 
 interface CommandRunParams {
-	interaction: ChatInputCommandInteraction;
-	client: Client;
-	handler: any;
+  interaction: ChatInputCommandInteraction;
+  client: Client;
+  handler: any;
 }
 
 interface CommandOptions {
-	devOnly: boolean;
-	deleted: boolean;
+  devOnly: boolean;
+  deleted: boolean;
 }
 
 export const data = new SlashCommandBuilder()
-	.setName("cpzreport")
-	.setDescription("Submits a CPZ (Cell) report")
-	.addStringOption((option) =>
-		option
-			.setName("cpz")
-			.setDescription("Select the CPZ cell")
-			.setRequired(true)
-			.addChoices(
-				{ name: "CPZ 1", value: "CPZ1" },
-				{ name: "CPZ 2", value: "CPZ2" },
-				{ name: "CPZ 3", value: "CPZ3" },
-				{ name: "CPZ 4", value: "CPZ4" },
-				{ name: "CPZ 5", value: "CPZ5" },
-				{ name: "CPZ 6", value: "CPZ6" },
-				{ name: "CPZ 7", value: "CPZ7" },
-				{ name: "CPZ 8", value: "CPZ8" },
-				{ name: "CPZ 9", value: "CPZ9" },
-				{ name: "CPZ 10", value: "CPZ10" },
-				{ name: "CPZ 11", value: "CPZ11" },
-				{ name: "CPZ 12", value: "CPZ12" },
-				{ name: "CPZ 13", value: "CPZ13" },
-				{ name: "CPZ 14", value: "CPZ14" },
-			),
-	)
-	.addStringOption((option) =>
-		option.setName("name").setDescription("Prisoner's name").setRequired(true),
-	)
-	.addStringOption((option) =>
-		option
-			.setName("dob")
-			.setDescription("Date of Birth (e.g. 01/01/1990)")
-			.setRequired(true),
-	)
-	.addStringOption((option) =>
-		option
-			.setName("incident_id")
-			.setDescription("Incident ID number")
-			.setRequired(true),
-	)
-	.addStringOption((option) =>
-		option
-			.setName("reason")
-			.setDescription("Reason for imprisonment")
-			.setRequired(true),
-	);
+  .setName("cpzreport")
+  .setDescription("Submits a CPZ (Cell) report")
+  .addStringOption((option) =>
+    option
+      .setName("cpz")
+      .setDescription("Select the CPZ cell")
+      .setRequired(true)
+      .addChoices(
+        { name: "CPZ 1 (VSPD)", value: "CPZ1VS" },
+        { name: "CPZ 2 (VSPD)", value: "CPZ2SV" },
+        { name: "CPZ 3 (VSPD)", value: "CPZ3VS" },
+        { name: "CPZ 4 (VSPD)", value: "CPZ4VS" },
+        { name: "CPZ 5 (VSPD)", value: "CPZ5VS" },
+        { name: "CPZ 6 (VSPD)", value: "CPZ6VS" },
+        { name: "CPZ 7 (VSPD)", value: "CPZ7VS" },
+        { name: "CPZ 8 (VSPD)", value: "CPZ8VS" },
+        { name: "CPZ 9 (VSPD)", value: "CPZ9VS" },
+        { name: "CPZ 10 (VSPD)", value: "CPZ10VS" },
+        { name: "CPZ 11 (VSPD)", value: "CPZ11VS" },
+        { name: "CPZ 12 (VSPD)", value: "CPZ12VS" },
+        { name: "CPZ 13 (VSPD)", value: "CPZ13VS" },
+        { name: "CPZ 14 (VSPD)", value: "CPZ14VS" },
+        { name: "CPZ 1 (SWAT Operations)", value: "CPZ1SW" },
+        { name: "CPZ 2 (SWAT Operations)", value: "CPZ2SW" },
+        { name: "CPZ 3 (SWAT Operations)", value: "CPZ3SW" },
+        { name: "CPZ 4 (SWAT Operations)", value: "CPZ4SW" },
+        { name: "CPZ 5 (SWAT Operations)", value: "CPZ5SW" },
+        { name: "CPZ 6 (SWAT Operations)", value: "CPZ6SW" },
+        { name: "CPZ 7 (SWAT Operations)", value: "CPZ7SW" },
+        { name: "CPZ 8 (SWAT Operations)", value: "CPZ8SW" },
+        { name: "CPZ 9 (SWAT Operations)", value: "CPZ9SW" },
+        { name: "CPZ 10 (SWAT Operations)", value: "CPZ10SW" },
+        { name: "CPZ 11 (SWAT Operations)", value: "CPZ11SW" },
+        { name: "CPZ 12 (SWAT Operations)", value: "CPZ12SW" },
+        { name: "CPZ (Government)", value: "CPZGOV" },
+        { name: "CPZ (LSPD Air Base)", value: "CPZAIRB" },
+      ),
+  )
+  .addStringOption((option) =>
+    option.setName("name").setDescription("Prisoner's name").setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("dob")
+      .setDescription("Date of Birth (e.g. 01/01/1990)")
+      .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("incident_id")
+      .setDescription("Incident ID number")
+      .setRequired(true),
+  )
+  .addStringOption((option) =>
+    option
+      .setName("reason")
+      .setDescription("Reason for imprisonment")
+      .setRequired(true),
+  );
 
 export const run = async ({
-	interaction,
-	client,
-	handler,
+  interaction,
+  client,
+  handler,
 }: CommandRunParams): Promise<void> => {
-	const member = interaction.member;
-	let hasRole = false;
+  const member = interaction.member;
+  let hasRole = false;
 
-	if (member) {
-		if (Array.isArray(member.roles)) {
-			hasRole = member.roles.some((roleId: string) =>
-				AUTHORIZED_ROLES.includes(roleId),
-			);
-		} else {
-			hasRole = (member.roles as any).cache.some((role: Role) =>
-				AUTHORIZED_ROLES.includes(role.id),
-			);
-		}
-	}
+  if (member) {
+    if (Array.isArray(member.roles)) {
+      hasRole = member.roles.some((roleId: string) =>
+        AUTHORIZED_ROLES.includes(roleId),
+      );
+    } else {
+      hasRole = (member.roles as any).cache.some((role: Role) =>
+        AUTHORIZED_ROLES.includes(role.id),
+      );
+    }
+  }
 
-	if (!hasRole) {
-		await interaction.reply({
-			content:
-				"❌ You do not have permission to use this command. You must be a police officer!",
-			flags: MessageFlags.Ephemeral,
-		});
-		return;
-	}
+  if (!hasRole) {
+    await interaction.reply({
+      content:
+        "❌ You do not have permission to use this command. You must be a police officer!",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
 
-	await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-	const cpzKey = interaction.options.getString("cpz", true);
-	const targetChannelId = CPZ_CHANNELS[cpzKey];
-	const name = interaction.options.getString("name", true);
-	const dob = interaction.options.getString("dob", true);
-	const incidentId = interaction.options.getString("incident_id", true);
-	const reason = interaction.options.getString("reason", true);
+  const cpzKey = interaction.options.getString("cpz", true);
+  const targetChannelId = CPZ_CHANNELS[cpzKey];
+  const name = interaction.options.getString("name", true);
+  const dob = interaction.options.getString("dob", true);
+  const incidentId = interaction.options.getString("incident_id", true);
+  const reason = interaction.options.getString("reason", true);
 
-	const embedContent = `# 🔒 LSPD CPZ REPORT: ${cpzKey}
+  const embedContent = `# 🔒 LSPD CPZ REPORT: ${cpzKey}
 
 ### 👤 OSOBNÍ ÚDAJE DRŽENÉ OSOBY
 - **Celé Jméno:** \`${name}\`
@@ -144,50 +172,50 @@ export const run = async ({
 **ARRESTING OFFICER:** <@${interaction.user.id}>
 **ČAS ZÁPISU:** <t:${Math.floor(Date.now() / 1000)}:F>`;
 
-	const textComponent = new TextDisplayBuilder().setContent(embedContent);
+  const textComponent = new TextDisplayBuilder().setContent(embedContent);
 
-	const thumbnailComponent = new ThumbnailBuilder({
-		media: {
-			url: LSPD_LOGO_URL,
-		},
-	});
+  const thumbnailComponent = new ThumbnailBuilder({
+    media: {
+      url: LSPD_LOGO_URL,
+    },
+  });
 
-	const sectionComponent = new SectionBuilder()
-		.addTextDisplayComponents(textComponent)
-		.setThumbnailAccessory(thumbnailComponent);
+  const sectionComponent = new SectionBuilder()
+    .addTextDisplayComponents(textComponent)
+    .setThumbnailAccessory(thumbnailComponent);
 
-	const resolvedButton = new ButtonBuilder()
-		.setCustomId("cpz_resolve")
-		.setLabel("✅ Resolved")
-		.setStyle(ButtonStyle.Success);
+  const resolvedButton = new ButtonBuilder()
+    .setCustomId("cpz_resolve")
+    .setLabel("✅ Resolved")
+    .setStyle(ButtonStyle.Success);
 
-	const actionRow1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-		resolvedButton,
-	);
+  const actionRow1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    resolvedButton,
+  );
 
-	try {
-		const channel = (await client.channels.fetch(
-			targetChannelId,
-		)) as TextChannel;
-		if (channel) {
-			await channel.send({
-				flags: MessageFlags.IsComponentsV2,
-				components: [sectionComponent, actionRow1],
-			});
-		}
+  try {
+    const channel = (await client.channels.fetch(
+      targetChannelId,
+    )) as TextChannel;
+    if (channel) {
+      await channel.send({
+        flags: MessageFlags.IsComponentsV2,
+        components: [sectionComponent, actionRow1],
+      });
+    }
 
-		await interaction.editReply({
-			content: `✅ CPZ Report for **${name}** has been successfully submitted to **${cpzKey}**.`,
-		});
-	} catch (error) {
-		console.error("Error sending CPZ report:", error);
-		await interaction.editReply({
-			content: "❌ Error while sending CPZ report.",
-		});
-	}
+    await interaction.editReply({
+      content: `✅ CPZ Report for **${name}** has been successfully submitted to **${cpzKey}**.`,
+    });
+  } catch (error) {
+    console.error("Error sending CPZ report:", error);
+    await interaction.editReply({
+      content: "❌ Error while sending CPZ report.",
+    });
+  }
 };
 
 export const options: CommandOptions = {
-	devOnly: false,
-	deleted: false,
+  devOnly: false,
+  deleted: false,
 };
