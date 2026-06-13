@@ -97,7 +97,7 @@ export const run = async ({ interaction, client, handler }: CommandRunParams): P
 **To.:** <@${targetUser.id}>
 **Subj.:** Předvolání
 
-Dobrý den, <@${targetUser.id}> tímto jste předvolán, aby jste se dostavil v **${time}** do ${kancelar} kanceláře k řešení služebních nesrovnalostí.
+Dobrý den, <@${targetUser.id}> tímto jste předvolán, abyste se dostavil v **${time}** do ${kancelar} k řešení služebních nesrovnalostí.
 
 ## Co to pro Vás znamená?
 Další informace podle interních předpisů Vám nemusí být sděleny. Pokud se do 24 hodin od výzvy nedostavíte, můžete být suspendován. Jedinou výjimkou je, že e-mailově domluvíte, že se z nějakého důvodu nedokáže dostavit.
