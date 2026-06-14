@@ -113,7 +113,7 @@ export const run = async ({
     .trim();
 
   const textComponent = new TextDisplayBuilder().setContent(
-    `# 🥷 Metro Alert\nZdravím.\n\nTímto jste obdržel/a Metro Alert z důvodu, že **${reason}**.\n\nInformace, které jste obdržel/a nikomu **nesdělujte!** V případě, že jste dostupný/á tak prosím neprodleně respondujte.\n\nAlert byl zaslán od **${senderName}** <@${interaction.user.id}>\n\n**🥷 LSPD Metropolitan Division**`,
+    `# 🥷 Metro Alert\nZdravím.\n\nTímto jste obdržel/a Metro Alert z důvodu, že **${reason}**.\n\nInformace, které jste obdržel/a nikomu **nesdělujte!** V případě, že jste dostupný/á tak prosím neprodleně respondujte.\n\nAlert byl zaslán od **${senderName}** (<@${interaction.user.id}>)\n\n**🥷 LSPD Metropolitan Division**`,
   );
 
   const thumbnailComponent = new ThumbnailBuilder({
