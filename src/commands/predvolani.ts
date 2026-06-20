@@ -189,15 +189,40 @@ function parseTimeToDate(timeStr: string): Date | null {
   const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
   if (!match) return null;
 
-  const now = new Date();
-  const target = new Date();
-  target.setHours(parseInt(match[1], 10), parseInt(match[2], 10), 0, 0);
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
 
-  if (target.getTime() <= now.getTime()) {
-    target.setDate(target.getDate() + 1);
+  const now = new Date();
+
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Prague",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+
+  const get = (type: string) =>
+    parseInt(parts.find((p) => p.type === type)!.value, 10);
+
+  const pragueYear = get("year");
+  const pragueMonth = get("month") - 1;
+  const pragueDay = get("day");
+
+  const pragueNowUtcMs = Date.UTC(pragueYear, pragueMonth, pragueDay, get("hour"), get("minute"), get("second"));
+  const pragueOffsetMs = pragueNowUtcMs - now.getTime();
+
+  const pragueTargetMs = Date.UTC(pragueYear, pragueMonth, pragueDay, hours, minutes, 0, 0);
+  let targetUtcMs = pragueTargetMs - pragueOffsetMs;
+
+  if (targetUtcMs <= now.getTime()) {
+    targetUtcMs += 24 * 60 * 60 * 1000;
   }
 
-  return target;
+  return new Date(targetUtcMs);
 }
 
 function scheduleReminderForPredvolani(
