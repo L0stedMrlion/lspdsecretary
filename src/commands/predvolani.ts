@@ -185,15 +185,15 @@ ${signiture}
   }
 };
 
-function parseTimeToDate(timeStr: string): Date | null {
-  const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
-  if (!match) return null;
-
-  const hours = parseInt(match[1], 10);
-  const minutes = parseInt(match[2], 10);
-
-  const now = new Date();
-
+function getPragueNowParts(now: Date): {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+  offsetMs: number;
+} {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Prague",
     year: "numeric",
@@ -208,21 +208,126 @@ function parseTimeToDate(timeStr: string): Date | null {
   const get = (type: string) =>
     parseInt(parts.find((p) => p.type === type)!.value, 10);
 
-  const pragueYear = get("year");
-  const pragueMonth = get("month") - 1;
-  const pragueDay = get("day");
+  const year = get("year");
+  const month = get("month") - 1;
+  const day = get("day");
+  const hour = get("hour");
+  const minute = get("minute");
+  const second = get("second");
 
-  const pragueNowUtcMs = Date.UTC(pragueYear, pragueMonth, pragueDay, get("hour"), get("minute"), get("second"));
-  const pragueOffsetMs = pragueNowUtcMs - now.getTime();
+  const pragueNowUtcMs = Date.UTC(year, month, day, hour, minute, second);
+  const offsetMs = pragueNowUtcMs - now.getTime();
 
-  const pragueTargetMs = Date.UTC(pragueYear, pragueMonth, pragueDay, hours, minutes, 0, 0);
-  let targetUtcMs = pragueTargetMs - pragueOffsetMs;
+  return { year, month, day, hour, minute, second, offsetMs };
+}
 
-  if (targetUtcMs <= now.getTime()) {
-    targetUtcMs += 24 * 60 * 60 * 1000;
+function buildPragueDate(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+  offsetMs: number,
+): Date {
+  const utcMs = Date.UTC(year, month, day, hour, minute, 0, 0) - offsetMs;
+  return new Date(utcMs);
+}
+
+function parseTimeToDate(timeStr: string): Date | null {
+  const now = new Date();
+  const p = getPragueNowParts(now);
+  const normalized = timeStr.trim().toLowerCase();
+
+  // za X hodin / za X minut
+  const relativeMatch = normalized.match(
+    /^za\s+(\d+)\s*(hodin[au]?|hodiny|minut[au]?|minuty|h|m)$/,
+  );
+  if (relativeMatch) {
+    const amount = parseInt(relativeMatch[1], 10);
+    const unit = relativeMatch[2];
+    const isHours = unit.startsWith("h");
+    return new Date(now.getTime() + amount * (isHours ? 3600000 : 60000));
   }
 
-  return new Date(targetUtcMs);
+  const timePartMatch = normalized.match(/(\d{1,2}):(\d{2})/);
+  const hours = timePartMatch ? parseInt(timePartMatch[1], 10) : null;
+  const minutes = timePartMatch ? parseInt(timePartMatch[2], 10) : null;
+
+  if (hours === null || minutes === null) return null;
+
+  const fullDateMatch = normalized.match(
+    /^(\d{1,2})[.\s]\s*(\d{1,2})[.\s]\s*(\d{4})/,
+  );
+  if (fullDateMatch) {
+    const day = parseInt(fullDateMatch[1], 10);
+    const month = parseInt(fullDateMatch[2], 10) - 1;
+    const year = parseInt(fullDateMatch[3], 10);
+    return buildPragueDate(year, month, day, hours, minutes, p.offsetMs);
+  }
+
+  const dayMonthMatch = normalized.match(/^(\d{1,2})[.\s]\s*(\d{1,2})\.?/);
+  if (dayMonthMatch) {
+    const day = parseInt(dayMonthMatch[1], 10);
+    const month = parseInt(dayMonthMatch[2], 10) - 1;
+    let year = p.year;
+    const candidate = buildPragueDate(
+      year,
+      month,
+      day,
+      hours,
+      minutes,
+      p.offsetMs,
+    );
+    if (candidate.getTime() <= now.getTime()) year++;
+    return buildPragueDate(year, month, day, hours, minutes, p.offsetMs);
+  }
+
+  if (normalized.startsWith("pozítří") || normalized.startsWith("pozitri")) {
+    const targetDate = buildPragueDate(
+      p.year,
+      p.month,
+      p.day + 2,
+      hours,
+      minutes,
+      p.offsetMs,
+    );
+    return targetDate;
+  }
+
+  if (normalized.startsWith("zítra") || normalized.startsWith("zitra")) {
+    return buildPragueDate(
+      p.year,
+      p.month,
+      p.day + 1,
+      hours,
+      minutes,
+      p.offsetMs,
+    );
+  }
+
+  if (normalized.startsWith("dnes")) {
+    return buildPragueDate(p.year, p.month, p.day, hours, minutes, p.offsetMs);
+  }
+
+  const bare = buildPragueDate(
+    p.year,
+    p.month,
+    p.day,
+    hours,
+    minutes,
+    p.offsetMs,
+  );
+  if (bare.getTime() <= now.getTime()) {
+    return buildPragueDate(
+      p.year,
+      p.month,
+      p.day + 1,
+      hours,
+      minutes,
+      p.offsetMs,
+    );
+  }
+  return bare;
 }
 
 function scheduleReminderForPredvolani(
@@ -237,8 +342,8 @@ function scheduleReminderForPredvolani(
   if (!targetTime) return false;
 
   const body = isIssuer
-    ? `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** začíná předvolání, které jste vystavil/a pro **${kancelar}** v **${time}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`
-    : `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** jste předvolán do **${kancelar}** na čas **${time}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`;
+    ? `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** začíná předvolání, které jste vystavil/a pro **${kancelar}** v **${time}**.\n\n👮 **Los Santos Police Department**`
+    : `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** jste předvolán do **${kancelar}** na čas **${time}**.\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`;
 
   const timer = scheduleReminder(reminderUserId, targetTime, async () => {
     try {
