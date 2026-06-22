@@ -8,7 +8,7 @@ import {
   SectionBuilder,
   Role,
 } from "discord.js";
-import { AUTHORIZED_ROLES, LSPD_LOGO_URL } from "../constants";
+import { AUTHORIZED_ROLES, LSPD_GUILD_ID, LSPD_LOGO_URL } from "../constants";
 import { addReminder, deleteReminderReference } from "../customReminderStore";
 
 interface CommandRunParams {
@@ -91,18 +91,17 @@ export const run = async ({
   interaction,
   client,
 }: CommandRunParams): Promise<void> => {
-  const member = interaction.member;
+  const lspdGuild = client.guilds.cache.get(LSPD_GUILD_ID);
   let hasRole = false;
 
-  if (member) {
-    if (Array.isArray(member.roles)) {
-      hasRole = member.roles.some((roleId: string) =>
-        AUTHORIZED_ROLES.includes(roleId),
-      );
-    } else {
-      hasRole = (member.roles as any).cache.some((role: Role) =>
+  if (lspdGuild) {
+    try {
+      const lspdMember = await lspdGuild.members.fetch(interaction.user.id);
+      hasRole = lspdMember.roles.cache.some((role: Role) =>
         AUTHORIZED_ROLES.includes(role.id),
       );
+    } catch {
+      hasRole = false;
     }
   }
 
