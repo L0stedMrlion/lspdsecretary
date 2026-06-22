@@ -73,18 +73,29 @@ function parseRelativeTime(timeStr: string): number | null {
   return found ? totalMs : null;
 }
 
+const PRAGUE_TZ = "Europe/Prague";
+
 function parseAbsoluteTime(timeStr: string): Date | null {
   const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})$/);
   if (!match) return null;
 
-  const now = new Date();
-  const target = new Date();
-  target.setHours(parseInt(match[1], 10), parseInt(match[2], 10), 0, 0);
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
 
-  if (target.getTime() <= now.getTime()) {
-    target.setDate(target.getDate() + 1);
+  const now = new Date();
+
+  const pragueNow = new Date(
+    now.toLocaleString("en-US", { timeZone: PRAGUE_TZ }),
+  );
+  const candidate = new Date(pragueNow);
+  candidate.setHours(hours, minutes, 0, 0);
+
+  if (candidate.getTime() <= pragueNow.getTime()) {
+    candidate.setDate(candidate.getDate() + 1);
   }
-  return target;
+
+  const utcOffset = now.getTime() - pragueNow.getTime();
+  return new Date(candidate.getTime() + utcOffset);
 }
 
 export const run = async ({
