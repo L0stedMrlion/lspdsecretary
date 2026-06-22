@@ -11,6 +11,10 @@ import {
   Role,
 } from "discord.js";
 import { scheduleReminder } from "../reminderStore";
+import {
+  persistReminder,
+  removeReminder as removePersisted,
+} from "../predvolaniReminderStore";
 
 const PREDVOLANI_CHANNEL_ID: string = "1350544990576574654";
 
@@ -330,22 +334,41 @@ function parseTimeToDate(timeStr: string): Date | null {
   return bare;
 }
 
-function scheduleReminderForPredvolani(
+export function scheduleReminderForPredvolani(
   recipient: User,
   reminderUserId: string,
   time: string,
   kancelar: string,
   client: Client,
   isIssuer: boolean = false,
+  persistedId?: string,
+  overrideTargetTime?: Date,
 ): boolean {
-  const targetTime = parseTimeToDate(time);
+  const targetTime = overrideTargetTime ?? parseTimeToDate(time);
   if (!targetTime) return false;
 
   const body = isIssuer
     ? `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** začíná předvolání, které jste vystavil/a pro **${kancelar}** v **${time}**.\n\n👮 **Los Santos Police Department**`
     : `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** jste předvolán do **${kancelar}** na čas **${time}**.\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`;
 
+  const reminderId =
+    persistedId ??
+    `${reminderUserId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+  if (!persistedId) {
+    persistReminder({
+      id: reminderId,
+      recipientId: recipient.id,
+      reminderUserId,
+      time,
+      kancelar,
+      isIssuer,
+      targetTimeMs: targetTime.getTime(),
+    });
+  }
+
   const timer = scheduleReminder(reminderUserId, targetTime, async () => {
+    removePersisted(reminderId);
     try {
       const text = new TextDisplayBuilder().setContent(body);
       const thumbnail = new ThumbnailBuilder({
@@ -366,7 +389,12 @@ function scheduleReminderForPredvolani(
     }
   });
 
-  return timer !== null;
+  if (timer === null) {
+    removePersisted(reminderId);
+    return false;
+  }
+
+  return true;
 }
 
 export const options: CommandOptions = {
