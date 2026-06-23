@@ -1,9 +1,9 @@
 import { GuildMember } from "discord.js";
-import { TARGET_GUILD_ID, SYNC_RULES } from "../../roleSyncConfig";
+import { TARGET_GUILD_ID, SYNC_RULES, type SyncRule } from "../../roleSyncConfig";
 
 export default async function (oldMember: GuildMember, newMember: GuildMember) {
   const rules = SYNC_RULES.filter(
-    (r) => r.sourceGuildId === newMember.guild.id,
+    (r: SyncRule) => r.sourceGuildId === newMember.guild.id,
   );
   if (rules.length === 0) return;
 
