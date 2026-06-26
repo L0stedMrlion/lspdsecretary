@@ -103,7 +103,7 @@ export const run = async ({ interaction, client }: CommandRunParams): Promise<vo
       .setThumbnailAccessory(thumbnailComponent);
 
     await interaction.reply({
-      flags: MessageFlags.IsComponentsV2,
+      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
       components: [sectionComponent],
     });
     return;
