@@ -1,7 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
 
-// File paths for persistence (saved in your root data/ folder)
 const PREFERENCES_PATH = path.join(
   __dirname,
   "..",
@@ -28,10 +27,6 @@ export interface CustomReminder {
 
 const activeReminders = new Map<string, CustomReminder>();
 let idCounter = 1;
-
-// ==========================================
-// 1. USER PREFERENCES (ENABLE/DISABLE STATUS)
-// ==========================================
 
 function loadDisabledUsers(): Set<string> {
   try {
@@ -64,10 +59,6 @@ export function enableReminder(userId: string): void {
   disabledUsers.delete(userId);
   saveDisabledUsers(disabledUsers);
 }
-
-// ==========================================
-// 2. ACTIVE REMINDERS (PERSISTENCE LAYER)
-// ==========================================
 
 function saveRemindersToDisk(): void {
   try {
@@ -109,7 +100,7 @@ export function loadRemindersFromDisk(): Omit<CustomReminder, "timeout">[] {
       };
     });
 
-    idCounter = maxId + 1; // Prevent ID overlap upon reboot
+    idCounter = maxId + 1;
     return loaded;
   } catch (error) {
     console.error("[Reminder Store] Failed to load reminders:", error);
