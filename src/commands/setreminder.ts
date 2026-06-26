@@ -28,7 +28,7 @@ export const data = new SlashCommandBuilder()
   .addStringOption((option) =>
     option
       .setName("time")
-      .setDescription("Time (e.g., 15:30 or relative like 10m, 1h, 2h 30m)")
+      .setDescription("Time (e.g., 1.1.2026 16:00, 15:30, or relative like 10m, 1h)")
       .setRequired(true),
   )
   .addStringOption((option) =>
@@ -76,22 +76,36 @@ function parseRelativeTime(timeStr: string): number | null {
 const PRAGUE_TZ = "Europe/Prague";
 
 function parseAbsoluteTime(timeStr: string): Date | null {
-  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})$/);
-  if (!match) return null;
-
-  const hours = parseInt(match[1], 10);
-  const minutes = parseInt(match[2], 10);
+  const cleaned = timeStr.trim().replace(/\s+/g, " ");
+  
+  const fullDateMatch = cleaned.match(/^(\d{1,2})[\.\/\s]+(\d{1,2})[\.\/\s]+(\d{4})\s+(\d{1,2}):(\d{2})$/);
+  
+  const timeOnlyMatch = cleaned.match(/^(\d{1,2}):(\d{2})$/);
 
   const now = new Date();
-
-  const pragueNow = new Date(
-    now.toLocaleString("en-US", { timeZone: PRAGUE_TZ }),
-  );
+  const pragueNow = new Date(now.toLocaleString("en-US", { timeZone: PRAGUE_TZ }));
   const candidate = new Date(pragueNow);
-  candidate.setHours(hours, minutes, 0, 0);
 
-  if (candidate.getTime() <= pragueNow.getTime()) {
-    candidate.setDate(candidate.getDate() + 1);
+  if (fullDateMatch) {
+    const day = parseInt(fullDateMatch[1], 10);
+    const month = parseInt(fullDateMatch[2], 10) - 1; // JS months are 0-11
+    const year = parseInt(fullDateMatch[3], 10);
+    const hours = parseInt(fullDateMatch[4], 10);
+    const minutes = parseInt(fullDateMatch[5], 10);
+
+    candidate.setFullYear(year, month, day);
+    candidate.setHours(hours, minutes, 0, 0);
+  } else if (timeOnlyMatch) {
+    const hours = parseInt(timeOnlyMatch[1], 10);
+    const minutes = parseInt(timeOnlyMatch[2], 10);
+
+    candidate.setHours(hours, minutes, 0, 0);
+
+    if (candidate.getTime() <= pragueNow.getTime()) {
+      candidate.setDate(candidate.getDate() + 1);
+    }
+  } else {
+    return null; 
   }
 
   const utcOffset = now.getTime() - pragueNow.getTime();
@@ -138,10 +152,10 @@ export const run = async ({
     targetDate = parseAbsoluteTime(timeInput);
   }
 
-  if (!targetDate) {
+  if (!targetDate || isNaN(targetDate.getTime())) {
     await interaction.reply({
       content:
-        "❌ Invalid time format. Use `HH:MM` (e.g., `15:30`) or a relative time (e.g., `10m`, `1h`, `2h 30m`).",
+        "❌ Invalid time format. Use `DD.MM.YYYY HH:MM` (e.g., `1.1.2026 16:00`), `HH:MM` (e.g., `15:30`) or relative time (e.g., `10m`, `1h`).",
       flags: MessageFlags.Ephemeral,
     });
     return;
@@ -168,6 +182,7 @@ export const run = async ({
   const formattedDate = targetDate.toLocaleDateString("en-US", {
     day: "numeric",
     month: "numeric",
+    year: "numeric",
     timeZone: "Europe/Prague",
   });
 
