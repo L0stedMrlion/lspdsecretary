@@ -1,38 +1,20 @@
 import * as fs from "fs";
 import * as path from "path";
 
-const PREFERENCES_PATH = path.join(
+const STORE_PATH = path.join(
   __dirname,
   "..",
   "data",
   "reminder-preferences.json",
 );
-const REMINDERS_STORE_PATH = path.join(
-  __dirname,
-  "..",
-  "data",
-  "active-reminders.json",
-);
 
 export const DEBUG_MODE = process.env.REMINDER_DEBUG === "true";
 
-export interface CustomReminder {
-  id: string;
-  userId: string;
-  message: string;
-  targetDate: Date;
-  channelId: string;
-  timeout?: NodeJS.Timeout;
-}
-
-const activeReminders = new Map<string, CustomReminder>();
-let idCounter = 1;
-
 function loadDisabledUsers(): Set<string> {
   try {
-    fs.mkdirSync(path.dirname(PREFERENCES_PATH), { recursive: true });
-    if (!fs.existsSync(PREFERENCES_PATH)) return new Set();
-    const raw = fs.readFileSync(PREFERENCES_PATH, "utf-8");
+    fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
+    if (!fs.existsSync(STORE_PATH)) return new Set();
+    const raw = fs.readFileSync(STORE_PATH, "utf-8");
     return new Set(JSON.parse(raw) as string[]);
   } catch {
     return new Set();
@@ -40,8 +22,8 @@ function loadDisabledUsers(): Set<string> {
 }
 
 function saveDisabledUsers(disabled: Set<string>): void {
-  fs.mkdirSync(path.dirname(PREFERENCES_PATH), { recursive: true });
-  fs.writeFileSync(PREFERENCES_PATH, JSON.stringify([...disabled]), "utf-8");
+  fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
+  fs.writeFileSync(STORE_PATH, JSON.stringify([...disabled]), "utf-8");
 }
 
 const disabledUsers = loadDisabledUsers();
@@ -60,97 +42,36 @@ export function enableReminder(userId: string): void {
   saveDisabledUsers(disabledUsers);
 }
 
-function saveRemindersToDisk(): void {
-  try {
-    fs.mkdirSync(path.dirname(REMINDERS_STORE_PATH), { recursive: true });
-    const dataToSave = Array.from(activeReminders.values()).map((r) => ({
-      id: r.id,
-      userId: r.userId,
-      message: r.message,
-      targetDate: r.targetDate.toISOString(),
-      channelId: r.channelId,
-    }));
-    fs.writeFileSync(
-      REMINDERS_STORE_PATH,
-      JSON.stringify(dataToSave, null, 2),
-      "utf-8",
-    );
-  } catch (error) {
-    console.error("[Reminder Store] Failed to save reminders:", error);
-  }
-}
-
-export function loadRemindersFromDisk(): Omit<CustomReminder, "timeout">[] {
-  try {
-    if (!fs.existsSync(REMINDERS_STORE_PATH)) return [];
-    const raw = fs.readFileSync(REMINDERS_STORE_PATH, "utf-8");
-    const parsed = JSON.parse(raw) as any[];
-
-    let maxId = 0;
-    const loaded = parsed.map((item) => {
-      const idNum = parseInt(item.id, 10);
-      if (idNum > maxId) maxId = idNum;
-
-      return {
-        id: item.id,
-        userId: item.userId,
-        message: item.message,
-        targetDate: new Date(item.targetDate),
-        channelId: item.channelId,
-      };
-    });
-
-    idCounter = maxId + 1;
-    return loaded;
-  } catch (error) {
-    console.error("[Reminder Store] Failed to load reminders:", error);
-    return [];
-  }
-}
-
-export function addReminder(
+export function scheduleReminder(
   userId: string,
-  message: string,
-  targetDate: Date,
-  channelId: string,
-  timeout: NodeJS.Timeout,
-): string {
-  const id = String(idCounter++);
-  activeReminders.set(id, {
-    id,
-    userId,
-    message,
-    targetDate,
-    channelId,
-    timeout,
-  });
+  targetTime: Date,
+  callback: () => void,
+  debugLabel?: string,
+): NodeJS.Timeout | null {
+  if (!isReminderEnabled(userId)) {
+    if (DEBUG_MODE)
+      console.log(`[Reminder] Skipped for ${userId} — reminders disabled.`);
+    return null;
+  }
 
-  saveRemindersToDisk();
-  return id;
-}
+  if (DEBUG_MODE) {
+    const label = debugLabel ?? userId;
+    console.log(
+      `[Reminder DEBUG] Firing in 5s for ${label} (real target: ${targetTime.toLocaleTimeString("cs-CZ", { timeZone: "Europe/Prague" })})`,
+    );
+    return setTimeout(callback, 5_000);
+  }
 
-export function registerRehydratedReminder(reminder: CustomReminder): void {
-  activeReminders.set(reminder.id, reminder);
-  saveRemindersToDisk();
-}
+  const reminderTime = new Date(targetTime.getTime() - 15 * 60 * 1000);
+  const delay = reminderTime.getTime() - Date.now();
 
-export function removeReminder(id: string): boolean {
-  const reminder = activeReminders.get(id);
-  if (!reminder) return false;
-  if (reminder.timeout) clearTimeout(reminder.timeout);
-  activeReminders.delete(id);
+  if (delay <= 0) {
+    console.log(`[Reminder] Skipped for ${userId} — time already passed.`);
+    return null;
+  }
 
-  saveRemindersToDisk();
-  return true;
-}
-
-export function deleteReminderReference(id: string): void {
-  activeReminders.delete(id);
-  saveRemindersToDisk();
-}
-
-export function getUserReminders(userId: string): CustomReminder[] {
-  return Array.from(activeReminders.values()).filter(
-    (r) => r.userId === userId,
+  console.log(
+    `[Reminder] Scheduled for ${userId} at ${reminderTime.toLocaleTimeString("cs-CZ", { timeZone: "Europe/Prague" })} (in ${Math.round(delay / 1000)}s)`,
   );
+  return setTimeout(callback, delay);
 }
