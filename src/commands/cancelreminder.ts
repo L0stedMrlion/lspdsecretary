@@ -34,7 +34,10 @@ export const data = new SlashCommandBuilder()
       .setRequired(false),
   );
 
-export const run = async ({ interaction, client }: CommandRunParams): Promise<void> => {
+export const run = async ({
+  interaction,
+  client,
+}: CommandRunParams): Promise<void> => {
   const lspdGuild = client.guilds.cache.get(LSPD_GUILD_ID);
   let hasRole = false;
 
@@ -51,7 +54,7 @@ export const run = async ({ interaction, client }: CommandRunParams): Promise<vo
 
   if (!hasRole) {
     await interaction.reply({
-      content: ":x: You do not have permission to use this command!",
+      content: "❌ You do not have permission to use this command!",
       flags: MessageFlags.Ephemeral,
     });
     return;
@@ -64,7 +67,7 @@ export const run = async ({ interaction, client }: CommandRunParams): Promise<vo
   if (!reminderId) {
     if (userReminders.length === 0) {
       await interaction.reply({
-        content: ":information_source: You have no active reminders.",
+        content: "ℹ️ You have no active reminders.",
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -88,7 +91,7 @@ export const run = async ({ interaction, client }: CommandRunParams): Promise<vo
           ? rem.message.slice(0, 47) + "..."
           : rem.message;
 
-      embedContent += `**ID: \`${rem.id}\`** | :date: ${dateStr} at ${timeStr} | :tv: <#${rem.channelId}>\n> ${msgPreview}\n\n`;
+      embedContent += `**ID: \`${rem.id}\`** | 📅 ${dateStr} at ${timeStr} | 📺 <#${rem.channelId}>\n> ${msgPreview}\n\n`;
     }
     embedContent += `To cancel a reminder, use: \`/cancelreminder id:<ID>\``;
 
