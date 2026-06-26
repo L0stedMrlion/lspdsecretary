@@ -106,7 +106,7 @@ export const run = async ({
       .setThumbnailAccessory(thumbnailComponent);
 
     await interaction.reply({
-      flags: MessageFlags.IsComponentsV2,
+      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
       components: [sectionComponent],
     });
     return;
