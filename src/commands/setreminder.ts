@@ -93,7 +93,13 @@ function parsePragueIntlParts(date: Date): Record<string, number> {
     }, {});
 }
 
-function pragueWallTimeToUTC(year: number, month: number, day: number, hours: number, minutes: number): Date {
+function pragueWallTimeToUTC(
+  year: number,
+  month: number,
+  day: number,
+  hours: number,
+  minutes: number,
+): Date {
   const isoApprox = [
     `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
     `T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00Z`,
@@ -101,7 +107,14 @@ function pragueWallTimeToUTC(year: number, month: number, day: number, hours: nu
   const approxUtc = new Date(isoApprox);
 
   const parts = parsePragueIntlParts(approxUtc);
-  const pragueAsUtcMs = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+  const pragueAsUtcMs = Date.UTC(
+    parts.year,
+    parts.month - 1,
+    parts.day,
+    parts.hour,
+    parts.minute,
+    parts.second,
+  );
   const offsetMs = pragueAsUtcMs - approxUtc.getTime();
 
   return new Date(approxUtc.getTime() - offsetMs);
@@ -116,7 +129,9 @@ function parseTimeInput(input: string): Date | null {
   const trimmed = input.trim();
 
   // D.M.YYYY HH:MM or D.M.YY HH:MM
-  const dateTimeMatch = trimmed.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})\s+(\d{1,2}):(\d{2})$/);
+  const dateTimeMatch = trimmed.match(
+    /^(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{2}|\d{4})\s+(\d{1,2}):(\d{2})$/,
+  );
   if (dateTimeMatch) {
     const day = parseInt(dateTimeMatch[1], 10);
     const month = parseInt(dateTimeMatch[2], 10);
@@ -125,7 +140,15 @@ function parseTimeInput(input: string): Date | null {
     const hours = parseInt(dateTimeMatch[4], 10);
     const minutes = parseInt(dateTimeMatch[5], 10);
 
-    if (month < 1 || month > 12 || day < 1 || day > 31 || hours > 23 || minutes > 59) return null;
+    if (
+      month < 1 ||
+      month > 12 ||
+      day < 1 ||
+      day > 31 ||
+      hours > 23 ||
+      minutes > 59
+    )
+      return null;
 
     return pragueWallTimeToUTC(year, month, day, hours, minutes);
   }
@@ -137,10 +160,18 @@ function parseTimeInput(input: string): Date | null {
     if (hours > 23 || minutes > 59) return null;
 
     const today = getNowPragueDate();
-    let candidate = pragueWallTimeToUTC(today.year, today.month, today.day, hours, minutes);
+    let candidate = pragueWallTimeToUTC(
+      today.year,
+      today.month,
+      today.day,
+      hours,
+      minutes,
+    );
 
     if (candidate.getTime() <= Date.now()) {
-      const nextDay = new Date(Date.UTC(today.year, today.month - 1, today.day + 1));
+      const nextDay = new Date(
+        Date.UTC(today.year, today.month - 1, today.day + 1),
+      );
       candidate = pragueWallTimeToUTC(
         nextDay.getUTCFullYear(),
         nextDay.getUTCMonth() + 1,
