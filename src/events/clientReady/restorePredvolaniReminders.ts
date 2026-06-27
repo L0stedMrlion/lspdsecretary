@@ -3,11 +3,16 @@ import type { CommandKit } from "commandkit";
 import { loadAllReminders } from "../../predvolaniReminderStore";
 import { scheduleReminderForPredvolani } from "../../commands/predvolani";
 
+let hasRestored = false;
+
 export default async function (
   _c: Client<true>,
   client: Client<true>,
   _handler: CommandKit,
 ) {
+  if (hasRestored) return;
+  hasRestored = true;
+
   const pending = loadAllReminders();
   if (pending.length === 0) return;
 
