@@ -28,7 +28,7 @@ export const data = new SlashCommandBuilder()
   .addStringOption((option) =>
     option
       .setName("time")
-      .setDescription("Time (e.g., 15:30 or relative like 10m, 1h, 2h 30m)")
+      .setDescription("Time: 15:30 · 1.1.2026 15:30 · 10m · 1h · 2h 30m")
       .setRequired(true),
   )
   .addStringOption((option) =>
@@ -75,27 +75,44 @@ function parseRelativeTime(timeStr: string): number | null {
 
 const PRAGUE_TZ = "Europe/Prague";
 
-function parseAbsoluteTime(timeStr: string): Date | null {
-  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})$/);
-  if (!match) return null;
-
-  const hours = parseInt(match[1], 10);
-  const minutes = parseInt(match[2], 10);
-
+function parseTimeInput(input: string): Date | null {
   const now = new Date();
+  const pragueNow = new Date(now.toLocaleString("en-US", { timeZone: PRAGUE_TZ }));
+  const utcOffset = now.getTime() - pragueNow.getTime();
 
-  const pragueNow = new Date(
-    now.toLocaleString("en-US", { timeZone: PRAGUE_TZ }),
-  );
-  const candidate = new Date(pragueNow);
-  candidate.setHours(hours, minutes, 0, 0);
+  // D.M.YYYY HH:MM or D.M.YY HH:MM
+  const dateTimeMatch = input.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})\s+(\d{1,2}):(\d{2})$/);
+  if (dateTimeMatch) {
+    const day = parseInt(dateTimeMatch[1], 10);
+    const month = parseInt(dateTimeMatch[2], 10);
+    let year = parseInt(dateTimeMatch[3], 10);
+    if (year < 100) year += 2000;
+    const hours = parseInt(dateTimeMatch[4], 10);
+    const minutes = parseInt(dateTimeMatch[5], 10);
 
-  if (candidate.getTime() <= pragueNow.getTime()) {
-    candidate.setDate(candidate.getDate() + 1);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+
+    const candidate = new Date(pragueNow);
+    candidate.setFullYear(year, month - 1, day);
+    candidate.setHours(hours, minutes, 0, 0);
+    return new Date(candidate.getTime() + utcOffset);
   }
 
-  const utcOffset = now.getTime() - pragueNow.getTime();
-  return new Date(candidate.getTime() + utcOffset);
+  // HH:MM — today or tomorrow
+  const timeOnlyMatch = input.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (timeOnlyMatch) {
+    const hours = parseInt(timeOnlyMatch[1], 10);
+    const minutes = parseInt(timeOnlyMatch[2], 10);
+
+    const candidate = new Date(pragueNow);
+    candidate.setHours(hours, minutes, 0, 0);
+    if (candidate.getTime() <= pragueNow.getTime()) {
+      candidate.setDate(candidate.getDate() + 1);
+    }
+    return new Date(candidate.getTime() + utcOffset);
+  }
+
+  return null;
 }
 
 export const run = async ({
@@ -135,16 +152,16 @@ export const run = async ({
   if (relativeMs !== null) {
     targetDate = new Date(Date.now() + relativeMs);
   } else {
-    targetDate = parseAbsoluteTime(timeInput);
-  }
+    targetDate = parseTimeInput(timeInput);
 
-  if (!targetDate) {
-    await interaction.reply({
-      content:
-        "❌ Invalid time format. Use `HH:MM` (e.g., `15:30`) or a relative time (e.g., `10m`, `1h`, `2h 30m`).",
-      flags: MessageFlags.Ephemeral,
-    });
-    return;
+    if (!targetDate) {
+      await interaction.reply({
+        content:
+          "❌ Invalid format. Examples:\n- Relative: `10m` · `1h` · `2h 30m`\n- Time only: `15:30` (today or tomorrow)\n- Date + time: `1.1.2026 15:30`",
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
   }
 
   const delay = targetDate.getTime() - Date.now();
@@ -165,9 +182,10 @@ export const run = async ({
     timeZone: "Europe/Prague",
   });
 
-  const formattedDate = targetDate.toLocaleDateString("en-US", {
+  const formattedDate = targetDate.toLocaleDateString("cs-CZ", {
     day: "numeric",
     month: "numeric",
+    year: "numeric",
     timeZone: "Europe/Prague",
   });
 
