@@ -37,4 +37,9 @@ export const SYNC_RULES: SyncRule[] = [
     sourceRoleId: "1517863169224085626",
     targetRoleId: "1350412720599732295",
   },
+  {
+    sourceGuildId: "1508904336342909088",
+    sourceRoleId: "1508904336527458361",
+    targetRoleId: "1517079569641898055",
+  },
 ];
