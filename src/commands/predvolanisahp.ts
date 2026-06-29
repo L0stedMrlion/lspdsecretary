@@ -16,7 +16,7 @@ import {
   removeReminder as removePersisted,
 } from "../predvolaniReminderStore";
 
-const PREDVOLANI_CHANNEL_ID: string = "1350544990576574654";
+const PREDVOLANI_CHANNEL_ID: string = "1518057269009318118";
 
 const AUTHORIZED_ROLES: string[] = [
   "1508904336627863627",
