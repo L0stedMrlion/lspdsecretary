@@ -9,8 +9,8 @@ function buildActivities(client: Client<true>) {
   const officerCount = lspdGuild?.memberCount ?? 0;
 
   return [
-    { name: "👮 LSPD Headquarters", type: ActivityType.Watching },
-    { name: "🥷 All Alerts", type: ActivityType.Watching },
+    { name: "👮 LSPD Vespucci HQ", type: ActivityType.Watching },
+    { name: "🥷 Metro Alerts", type: ActivityType.Watching },
     { name: `👮 ${officerCount} Police Officers`, type: ActivityType.Watching },
     { name: `⚡ All Automatizations`, type: ActivityType.Competing },
     { name: `📊 All Divisions`, type: ActivityType.Watching },
