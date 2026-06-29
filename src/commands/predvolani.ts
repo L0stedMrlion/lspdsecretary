@@ -29,6 +29,17 @@ const AUTHORIZED_ROLES: string[] = [
   "1350407478386495518",
 ];
 
+const activeReminders = new Set<string>();
+
+function buildReminderKey(
+  userId: string,
+  time: string,
+  kancelar: string,
+  isIssuer: boolean,
+) {
+  return `${userId}-${time}-${kancelar}-${isIssuer ? "issuer" : "target"}`;
+}
+
 interface CommandRunParams {
   interaction: ChatInputCommandInteraction;
   client: Client;
@@ -144,6 +155,7 @@ ${signiture}
     const channel = (await client.channels.fetch(
       PREDVOLANI_CHANNEL_ID,
     )) as TextChannel;
+
     if (channel) {
       await channel.send({
         flags: MessageFlags.IsComponentsV2,
@@ -166,6 +178,7 @@ ${signiture}
       time,
       kancelar,
       client,
+      false,
     );
 
     const issuerReminder = scheduleReminderForPredvolani(
@@ -178,6 +191,7 @@ ${signiture}
     );
 
     const anyReminder = targetReminder || issuerReminder;
+
     await interaction.editReply({
       content: `✅ Předvolání bylo úspěšně odesláno pro <@${targetUser.id}> na ${time} do ${kancelar} kanceláře.${anyReminder ? " 🔔 Připomenutí bylo nastaveno 15 minut před termínem." : ""}`,
     });
@@ -242,7 +256,6 @@ function parseTimeToDate(timeStr: string): Date | null {
   const p = getPragueNowParts(now);
   const normalized = timeStr.trim().toLowerCase();
 
-  // za X hodin / za X minut
   const relativeMatch = normalized.match(
     /^za\s+(\d+)\s*(hodin[au]?|hodiny|minut[au]?|minuty|h|m)$/,
   );
@@ -274,20 +287,13 @@ function parseTimeToDate(timeStr: string): Date | null {
     const day = parseInt(dayMonthMatch[1], 10);
     const month = parseInt(dayMonthMatch[2], 10) - 1;
     let year = p.year;
-    const candidate = buildPragueDate(
-      year,
-      month,
-      day,
-      hours,
-      minutes,
-      p.offsetMs,
-    );
+    const candidate = buildPragueDate(year, month, day, hours, minutes, p.offsetMs);
     if (candidate.getTime() <= now.getTime()) year++;
     return buildPragueDate(year, month, day, hours, minutes, p.offsetMs);
   }
 
   if (normalized.startsWith("pozítří") || normalized.startsWith("pozitri")) {
-    const targetDate = buildPragueDate(
+    return buildPragueDate(
       p.year,
       p.month,
       p.day + 2,
@@ -295,7 +301,6 @@ function parseTimeToDate(timeStr: string): Date | null {
       minutes,
       p.offsetMs,
     );
-    return targetDate;
   }
 
   if (normalized.startsWith("zítra") || normalized.startsWith("zitra")) {
@@ -321,6 +326,7 @@ function parseTimeToDate(timeStr: string): Date | null {
     minutes,
     p.offsetMs,
   );
+
   if (bare.getTime() <= now.getTime()) {
     return buildPragueDate(
       p.year,
@@ -331,6 +337,7 @@ function parseTimeToDate(timeStr: string): Date | null {
       p.offsetMs,
     );
   }
+
   return bare;
 }
 
@@ -346,6 +353,12 @@ export function scheduleReminderForPredvolani(
 ): boolean {
   const targetTime = overrideTargetTime ?? parseTimeToDate(time);
   if (!targetTime) return false;
+
+  const key = buildReminderKey(reminderUserId, time, kancelar, isIssuer);
+
+  if (activeReminders.has(key)) return false;
+
+  activeReminders.add(key);
 
   const body = isIssuer
     ? `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** začíná předvolání, které jste vystavil/a pro **${kancelar}** v **${time}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`
@@ -368,14 +381,17 @@ export function scheduleReminderForPredvolani(
   }
 
   const timer = scheduleReminder(reminderUserId, targetTime, async () => {
-    removePersisted(reminderId);
+    activeReminders.delete(key);
+
     try {
       const text = new TextDisplayBuilder().setContent(body);
+
       const thumbnail = new ThumbnailBuilder({
         media: {
           url: "https://cdn.discordapp.com/attachments/1287133753356980329/1369380612921757766/LSPD1.png?ex=68603493&is=685ee313&hm=715794e0df178e34b0c31252e01d713f40d7f924dc2caf15d956bae6b7929ae0&",
         },
       });
+
       const section = new SectionBuilder()
         .addTextDisplayComponents(text)
         .setThumbnailAccessory(thumbnail);
@@ -390,6 +406,7 @@ export function scheduleReminderForPredvolani(
   });
 
   if (timer === null) {
+    activeReminders.delete(key);
     removePersisted(reminderId);
     return false;
   }
