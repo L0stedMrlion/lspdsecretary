@@ -5,43 +5,34 @@ export default async function (oldMember: GuildMember, newMember: GuildMember) {
   const rules = SYNC_RULES.filter(
     (r: SyncRule) => r.sourceGuildId === newMember.guild.id,
   );
+
   if (rules.length === 0) return;
 
   const targetGuild = newMember.client.guilds.cache.get(TARGET_GUILD_ID);
   if (!targetGuild) {
-    console.warn(`[RoleSync] Target guild ${TARGET_GUILD_ID} not in cache.`);
+    console.warn(`[RoleSync] Target guild not in cache.`);
     return;
   }
 
-  const targetMember = await targetGuild.members
-    .fetch(newMember.id)
-    .catch(() => null);
+  const targetMember = await targetGuild.members.fetch(newMember.id).catch(() => null);
   if (!targetMember) return;
 
   for (const rule of rules) {
-    if (rule.sourceGuildId !== newMember.guild.id) continue;
-
     const shouldHave = newMember.roles.cache.has(rule.sourceRoleId);
     const hasRole = targetMember.roles.cache.has(rule.targetRoleId);
 
-    if (shouldHave && !hasRole) {
-      await targetMember.roles
-        .add(rule.targetRoleId)
-        .catch((err) =>
-          console.error(
-            `[RoleSync] Failed to add role to ${targetMember.id}: ${err.message}`,
-          ),
-        );
-      console.log(`[RoleSync] +role ${rule.targetRoleId} → ${targetMember.id}`);
-    } else if (!shouldHave && hasRole) {
-      await targetMember.roles
-        .remove(rule.targetRoleId)
-        .catch((err) =>
-          console.error(
-            `[RoleSync] Failed to remove role from ${targetMember.id}: ${err.message}`,
-          ),
-        );
-      console.log(`[RoleSync] -role ${rule.targetRoleId} → ${targetMember.id}`);
+    if (shouldHave === hasRole) continue;
+
+    try {
+      if (shouldHave) {
+        await targetMember.roles.add(rule.targetRoleId);
+        console.log(`[RoleSync] + ${targetMember.id} → ${rule.targetRoleId}`);
+      } else {
+        await targetMember.roles.remove(rule.targetRoleId);
+        console.log(`[RoleSync] - ${targetMember.id} → ${rule.targetRoleId}`);
+      }
+    } catch (err: any) {
+      console.error(`[RoleSync] Role sync failed for ${targetMember.id}: ${err.message}`);
     }
   }
 }
