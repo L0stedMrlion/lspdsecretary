@@ -1,39 +1,47 @@
-import { Client } from "discord.js";
+import { Client, Guild, GuildMember } from "discord.js";
 import { TARGET_GUILD_ID, SYNC_RULES } from "./roleSyncConfig";
+
+async function safeFetchMembers(guild: Guild) {
+  try {
+    return await guild.members.fetch();
+  } catch (err: any) {
+    console.error(`[RoleSync] Failed to fetch members from ${guild.id}:`, err);
+    return null;
+  }
+}
 
 export async function runRoleSync(client: Client<true>): Promise<void> {
   const targetGuild = client.guilds.cache.get(TARGET_GUILD_ID);
   if (!targetGuild) {
-    console.warn(
-      `[RoleSync] Target guild ${TARGET_GUILD_ID} not found in cache.`,
-    );
+    console.warn(`[RoleSync] Target guild not found in cache.`);
     return;
   }
 
-  await targetGuild.members.fetch();
-
   const sourceGuildIds = [...new Set(SYNC_RULES.map((r) => r.sourceGuildId))];
 
-  const sourceGuilds = new Map<
-    string,
-    Awaited<ReturnType<typeof targetGuild.members.fetch>>
-  >();
+  const sourceGuildMembers = new Map<string, Map<string, GuildMember>>();
+
   for (const guildId of sourceGuildIds) {
     const guild = client.guilds.cache.get(guildId);
     if (!guild) {
-      console.warn(
-        `[RoleSync] Source guild ${guildId} not in cache — skipping.`,
-      );
+      console.warn(`[RoleSync] Source guild ${guildId} not in cache — skipping.`);
       continue;
     }
-    sourceGuilds.set(guildId, await guild.members.fetch());
+
+    const members = await safeFetchMembers(guild);
+    if (!members) continue;
+
+    sourceGuildMembers.set(guildId, members);
   }
+
+  const targetMembers = await safeFetchMembers(targetGuild);
+  if (!targetMembers) return;
 
   let added = 0;
   let removed = 0;
 
   for (const rule of SYNC_RULES) {
-    const sourceMembers = sourceGuilds.get(rule.sourceGuildId);
+    const sourceMembers = sourceGuildMembers.get(rule.sourceGuildId);
     if (!sourceMembers) continue;
 
     const qualifiedUserIds = new Set(
@@ -42,27 +50,25 @@ export async function runRoleSync(client: Client<true>): Promise<void> {
         .map((m) => m.id),
     );
 
-    for (const targetMember of targetGuild.members.cache.values()) {
-      const shouldHave = qualifiedUserIds.has(targetMember.id);
-      const hasRole = targetMember.roles.cache.has(rule.targetRoleId);
+    for (const member of targetMembers.values()) {
+      const shouldHave = qualifiedUserIds.has(member.id);
+      const hasRole = member.roles.cache.has(rule.targetRoleId);
 
       if (shouldHave && !hasRole) {
-        await targetMember.roles
-          .add(rule.targetRoleId)
-          .catch((err) =>
-            console.error(
-              `[RoleSync] Failed to add role to ${targetMember.id}: ${err.message}`,
-            ),
+        await member.roles.add(rule.targetRoleId).catch((err: any) => {
+          console.error(
+            `[RoleSync] Failed to add role to ${member.id}: ${err.message}`,
           );
+        });
         added++;
-      } else if (!shouldHave && hasRole) {
-        await targetMember.roles
-          .remove(rule.targetRoleId)
-          .catch((err) =>
-            console.error(
-              `[RoleSync] Failed to remove role from ${targetMember.id}: ${err.message}`,
-            ),
+      }
+
+      if (!shouldHave && hasRole) {
+        await member.roles.remove(rule.targetRoleId).catch((err: any) => {
+          console.error(
+            `[RoleSync] Failed to remove role from ${member.id}: ${err.message}`,
           );
+        });
         removed++;
       }
     }
