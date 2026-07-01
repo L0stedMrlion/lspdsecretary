@@ -3,8 +3,15 @@ import { TARGET_GUILD_ID, SYNC_RULES } from "./roleSyncConfig";
 
 async function safeFetchMembers(guild: Guild) {
   try {
-    return await guild.members.fetch();
+    return new Map(await guild.members.fetch());
   } catch (err: any) {
+    if (err?.code === "GuildMembersTimeout") {
+      console.warn(
+        `[RoleSync] Member fetch timed out for ${guild.id}; using cached members instead.`,
+      );
+      return new Map(guild.members.cache);
+    }
+
     console.error(`[RoleSync] Failed to fetch members from ${guild.id}:`, err);
     return null;
   }
@@ -24,7 +31,9 @@ export async function runRoleSync(client: Client<true>): Promise<void> {
   for (const guildId of sourceGuildIds) {
     const guild = client.guilds.cache.get(guildId);
     if (!guild) {
-      console.warn(`[RoleSync] Source guild ${guildId} not in cache — skipping.`);
+      console.warn(
+        `[RoleSync] Source guild ${guildId} not in cache — skipping.`,
+      );
       continue;
     }
 
