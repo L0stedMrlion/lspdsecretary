@@ -1,6 +1,9 @@
 import { Client, User } from "discord.js";
 import type { CommandKit } from "commandkit";
-import { loadAllReminders } from "../../predvolaniReminderStore";
+import {
+  loadAllReminders,
+  removeReminder,
+} from "../../predvolaniReminderStore";
 import { scheduleReminderForPredvolani } from "../../commands/predvolani";
 
 let hasRestored = false;
@@ -16,12 +19,17 @@ export default async function (
   const pending = loadAllReminders();
   if (pending.length === 0) return;
 
-  console.log(`[PredvolaniReminder] Restoring ${pending.length} reminder(s) after restart...`);
+  console.log(
+    `[PredvolaniReminder] Restoring ${pending.length} reminder(s) after restart...`,
+  );
 
   for (const r of pending) {
     const fireAt = r.targetTimeMs - 15 * 60 * 1000;
     if (fireAt <= Date.now()) {
-      console.log(`[PredvolaniReminder] Skipping expired reminder ${r.id} for ${r.reminderUserId}`);
+      removeReminder(r.id);
+      console.log(
+        `[PredvolaniReminder] Removed expired reminder ${r.id} for ${r.reminderUserId}`,
+      );
       continue;
     }
 
@@ -29,7 +37,9 @@ export default async function (
     try {
       recipient = await client.users.fetch(r.recipientId);
     } catch {
-      console.error(`[PredvolaniReminder] Could not fetch user ${r.recipientId} for reminder ${r.id}`);
+      console.error(
+        `[PredvolaniReminder] Could not fetch user ${r.recipientId} for reminder ${r.id}`,
+      );
       continue;
     }
 
