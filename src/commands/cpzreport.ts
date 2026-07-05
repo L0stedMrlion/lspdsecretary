@@ -153,6 +153,15 @@ export const run = async ({
   const incidentId = interaction.options.getString("incident_id", true);
   const reason = interaction.options.getString("reason", true);
 
+  let mistoVykonu = "Vespucci Police Department";
+  if (cpzKey.endsWith("SH")) {
+    mistoVykonu = "San Andreas Highway Patrol Station";
+  } else if (cpzKey === "CPZGOV") {
+    mistoVykonu = "Los Santos Townhall";
+  } else if (cpzKey === "CPZAIR") {
+    mistoVykonu = "LSPD Air Base";
+  }
+
   const embedContent = `# 🔒 LSPD CPZ REPORT: ${cpzKey}
 
 ### 👤 OSOBNÍ ÚDAJE DRŽENÉ OSOBY
@@ -161,7 +170,7 @@ export const run = async ({
 - **Číslo Incidentu v MDT:** \`#${incidentId}\`
 
 ### 📑 INFORMACE O ZADRŽENÍ
-- **Místo Výkonu:** Vespucci Police Department
+- **Místo Výkonu:** ${mistoVykonu}
 - **Číslo CPZ:** \`${cpzKey}\`
 - **Důvod Zadržení v CPZ:** \`${reason}\`
 
