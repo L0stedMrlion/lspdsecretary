@@ -15,7 +15,7 @@ import {
 import { registerMetroAlert } from "../metroAlertStore";
 
 const GUILD_ID = "1350602855798669382";
-const METRO_ROLE_ID = "1350606847069130752";
+const METRO_ROLE_ID = "1467806169220513852";
 const LOG_CHANNEL_ID = "1515479128214737047";
 const ALLOWED_ROLE_IDS = [
   "1350606847069130752",
