@@ -111,22 +111,21 @@ zasíláme Vám oficiální vyhodnocení Vašich zkoušek na **Sergeant Training
 ## 📊 Výsledky zkoušky
 **Kandidát:** ${icJmenoCandidate}
 **Výsledek:** **${vysledek}**
-**Bodové hodnocení:** ${body}
+**Bodové hodnocení:** ${body} (první hodnota je písemná zk.; druhá ústní. Poté součet)
 
 **👥 Zkušební komise:**
 - **Chief of Police** - M. Reynolds
 - **Captain** - E. Russo
-- **Lieutenant** Holloway
+- **Lieutenant** - B. Holloway
 
 ---
 
 ## 📊 Statistický přehled výsledků
 *Bylo hodnoceno celkem 6 účastníků.*
-**Průměr:** xxx bodu
-**Medián:** xx bodu
-**Nejlepší výsledek:** x bodu
-**Rozpětí:** x bodů
-**Modus:** x bodu
+- **Průměr:** 19,08 bodu
+- **Medián:** 19,5 bodu
+- **Nejlepší výsledek:** 24 bodů
+- **Rozpětí:** 11,5 bodu
 
 ---
 
