@@ -43,7 +43,7 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
       .addChoices(
         { name: "Prospěl(a)", value: "Prospěl ✅" },
-        { name: "Neprospěl(a)", value: "Neprospěl❌" },
+        { name: "Neprospěl(a)", value: "Neprospěl ❌" },
       ),
   )
   .addStringOption((option) =>
@@ -102,7 +102,8 @@ export const run = async ({
 
   const content = `# 📑 Vyhodnocení SGT Zkoušek
 
-Dobrý den, **${icJmenoCandidate}**,
+Dobrý den **${icJmenoCandidate}**,
+
 zasíláme Vám oficiální vyhodnocení Vašich zkoušek na **Sergeant Training**.
 
 ---
@@ -113,29 +114,28 @@ zasíláme Vám oficiální vyhodnocení Vašich zkoušek na **Sergeant Training
 **Bodové hodnocení:** ${body}
 
 **👥 Zkušební komise:**
-- **Chief of Police** Clark
-- **Commander** Reynolds
-- **Lieutenant** Brooks
-- **Sergeant II.** Wattkins
-- **Sergeant II.** Holloway
+- **Chief of Police** - M. Reynolds
+- **Captain** - E. Russo
+- **Lieutenant** Holloway
 
 ---
 
 ## 📊 Statistický přehled výsledků
-*Bylo hodnoceno celkem 7 účastníků.*
-**Průměr:** 20.79 bodu
-**Medián:** 22.5 bodu
-**Nejlepší výsledek:** 26.0 bodu
-**Rozpětí:** 11-26 bodů
-**Modus:** 26.0 bodu
+*Bylo hodnoceno celkem 6 účastníků.*
+**Průměr:** xxx bodu
+**Medián:** xx bodu
+**Nejlepší výsledek:** x bodu
+**Rozpětí:** x bodů
+**Modus:** x bodu
 
 ---
 
-Pokud máte jakékoliv dotazy k výsledku, kontaktujte **CMD. Reynolds**.
+Opravený písemný test Vám byl zaslán na e-mail se správným řešením. Pokud máte jakékoliv dotazy k výsledku, kontaktujte **M. Reynolds**.
 
 S pozdravem,
 ${podpis}  
-**Los Santos Police Department**`;
+
+**👮 Los Santos Police Department**`;
 
   const textComponent = new TextDisplayBuilder().setContent(content);
 
