@@ -190,21 +190,7 @@ export const run = async ({
   interaction,
   client,
 }: CommandRunParams): Promise<void> => {
-  const lspdGuild = client.guilds.cache.get(LSPD_GUILD_ID);
-  let hasRole = false;
-
-  if (lspdGuild) {
-    try {
-      const lspdMember = await lspdGuild.members.fetch(interaction.user.id);
-      hasRole = lspdMember.roles.cache.some((role: Role) =>
-        AUTHORIZED_ROLES.includes(role.id),
-      );
-    } catch {
-      hasRole = false;
-    }
-  }
-
-  if (!hasRole) {
+  if (interaction.user.id !== "710549603216261141") {
     await interaction.reply({
       content: "❌ You do not have permission to use this command!",
       flags: MessageFlags.Ephemeral,
