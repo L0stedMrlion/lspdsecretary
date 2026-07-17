@@ -361,7 +361,7 @@ export function scheduleReminderForPredvolani(
   activeReminders.add(key);
 
   const body = isIssuer
-    ? `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** začíná předvolání, které jste vystavil/a pro **${kancelar}** v **${time}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`
+    ? `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** začíná předvolání, které jste vystavil/a pro **${kancelar}** na **${time}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`
     : `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** jste předvolán do **${kancelar}** na čas **${time}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`;
 
   const reminderId =
