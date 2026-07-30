@@ -18,3 +18,6 @@ export const AUTHORIZED_ROLES: string[] = [
 
 export const LSPD_LOGO_URL =
 	"https://cdn.discordapp.com/attachments/1287133753356980329/1369380612921757766/LSPD1.png?ex=68603493&is=685ee313&hm=715794e0df178e34b0c31252e01d713f40d7f924dc2caf15d956bae6b7929ae0&";
+
+export const SAHP_LOGO_URL =
+    "https://cdn.discordapp.com/attachments/1518885492953714722/1519704316275851375/SAHP.png?ex=6a68b66f&is=6a6764ef&hm=bb65cdb4b257d56e14ac96cffd1d83bf893fb4aac592c1e325224904a02dedaa&";
