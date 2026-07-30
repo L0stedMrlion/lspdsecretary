@@ -31,6 +31,11 @@ const AUTHORIZED_ROLES: string[] = [
 
 const activeReminders = new Set<string>();
 
+function cleanTimeString(input: string): string {
+  const match = input.match(/(\d{1,2}:\d{2})/);
+  return match ? match[1] : input.trim();
+}
+
 function buildReminderKey(
   userId: string,
   time: string,
@@ -113,9 +118,12 @@ export const run = async ({
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const targetUser: User = interaction.options.getUser("user", true);
-  const time: string = interaction.options.getString("time", true);
+  const rawTime: string = interaction.options.getString("time", true);
+  const time: string = cleanTimeString(rawTime);
   const kancelar: string = interaction.options.getString("kancelar", true);
   const signiture: string = interaction.options.getString("signiture", true);
+
+  const calculatedTargetTime = parseTimeToDate(rawTime);
 
   const currentTime = new Date().toLocaleTimeString("cs-CZ", {
     hour: "2-digit",
@@ -179,6 +187,8 @@ ${signiture}
       kancelar,
       client,
       false,
+      undefined,
+      calculatedTargetTime ?? undefined,
     );
 
     const issuerReminder = scheduleReminderForPredvolani(
@@ -188,6 +198,8 @@ ${signiture}
       kancelar,
       client,
       true,
+      undefined,
+      calculatedTargetTime ?? undefined,
     );
 
     const anyReminder = targetReminder || issuerReminder;
@@ -287,7 +299,14 @@ function parseTimeToDate(timeStr: string): Date | null {
     const day = parseInt(dayMonthMatch[1], 10);
     const month = parseInt(dayMonthMatch[2], 10) - 1;
     let year = p.year;
-    const candidate = buildPragueDate(year, month, day, hours, minutes, p.offsetMs);
+    const candidate = buildPragueDate(
+      year,
+      month,
+      day,
+      hours,
+      minutes,
+      p.offsetMs,
+    );
     if (candidate.getTime() <= now.getTime()) year++;
     return buildPragueDate(year, month, day, hours, minutes, p.offsetMs);
   }
@@ -355,18 +374,22 @@ export function scheduleReminderForPredvolani(
   if (!targetTime) return false;
 
   const key = buildReminderKey(reminderUserId, time, kancelar, isIssuer);
+  const reminderId =
+    persistedId ??
+    `${reminderUserId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-  if (activeReminders.has(key)) return false;
+  if (activeReminders.has(key)) {
+    if (!persistedId) {
+      removePersisted(reminderId);
+    }
+    return false;
+  }
 
   activeReminders.add(key);
 
   const body = isIssuer
-    ? `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** začíná předvolání, které jste vystavil/a pro **${kancelar}** na **${time}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`
+    ? `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** začíná předvolání, které jste vystavil/a pro **${kancelar}** v **${time}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`
     : `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** jste předvolán do **${kancelar}** na čas **${time}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`;
-
-  const reminderId =
-    persistedId ??
-    `${reminderUserId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
   if (!persistedId) {
     persistReminder({
