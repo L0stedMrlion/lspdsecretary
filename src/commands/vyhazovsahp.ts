@@ -27,7 +27,7 @@ interface CommandOptions {
 }
 
 export const data = new SlashCommandBuilder()
-  .setName("vyhazov")
+  .setName("vyhazovsahp")
   .setDescription("Sends an official notice of employment termination")
   .addUserOption((option) =>
     option
@@ -53,7 +53,7 @@ export const run = async ({
   client,
   handler,
 }: CommandRunParams): Promise<void> => {
-  if (interaction.user.id !== "710549603216261141") {
+  if (interaction.user.id !== "735501561819824218") {
     await interaction.reply({
       content: "❌ You do not have permission to use this command.",
       flags: MessageFlags.Ephemeral,
