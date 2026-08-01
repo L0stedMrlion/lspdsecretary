@@ -134,7 +134,7 @@ export const run = async ({
 **To.:** <@${targetUser.id}>
 **Subj.:** Předvolání
 
-Dobrý den, <@${targetUser.id}> tímto jste předvolán*a, abyste se dostavil*a v **${time}** do ${kancelar} k řešení služebních nesrovnalostí.
+Dobrý den, <@${targetUser.id}> tímto jste předvolán/a, abyste se dostavil/a v **${time}** do ${kancelar} k řešení služebních nesrovnalostí.
 
 ## Co to pro Vás znamená?
 Další informace podle interních předpisů Vám nemusí být sděleny. Pokud se do 24 hodin od výzvy nedostavíte, můžete být suspendován. Jedinou výjimkou je, že e-mailově domluvíte, že se z nějakého důvodu nedokáže dostavit.
@@ -383,8 +383,8 @@ export function scheduleReminderForPredvolani(
   const cleanTime = cleanTimeString(time);
 
   const body = isIssuer
-    ? `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** začíná předvolání, které jste vystavil*a pro **${kancelar}** v **${cleanTime}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`
-    : `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** jste předvolán*a do **${kancelar}** na čas **${cleanTime}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`;
+    ? `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** začíná předvolání, které jste vystavil/a pro **${kancelar}** v **${cleanTime}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`
+    : `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** jste předvolán/a do **${kancelar}** na čas **${cleanTime}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`;
 
   if (!persistedId) {
     persistReminder({
