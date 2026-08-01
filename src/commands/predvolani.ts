@@ -118,12 +118,9 @@ export const run = async ({
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const targetUser: User = interaction.options.getUser("user", true);
-  const rawTime: string = interaction.options.getString("time", true);
-  const time: string = cleanTimeString(rawTime);
+  const time: string = interaction.options.getString("time", true);
   const kancelar: string = interaction.options.getString("kancelar", true);
   const signiture: string = interaction.options.getString("signiture", true);
-
-  const calculatedTargetTime = parseTimeToDate(rawTime);
 
   const currentTime = new Date().toLocaleTimeString("cs-CZ", {
     hour: "2-digit",
@@ -187,8 +184,6 @@ ${signiture}
       kancelar,
       client,
       false,
-      undefined,
-      calculatedTargetTime ?? undefined,
     );
 
     const issuerReminder = scheduleReminderForPredvolani(
@@ -198,8 +193,6 @@ ${signiture}
       kancelar,
       client,
       true,
-      undefined,
-      calculatedTargetTime ?? undefined,
     );
 
     const anyReminder = targetReminder || issuerReminder;
@@ -387,9 +380,11 @@ export function scheduleReminderForPredvolani(
 
   activeReminders.add(key);
 
+  const cleanTime = cleanTimeString(time);
+
   const body = isIssuer
-    ? `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** začíná předvolání, které jste vystavil*a pro **${kancelar}** v **${time}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`
-    : `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** jste předvolán*a do **${kancelar}** na čas **${time}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`;
+    ? `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** začíná předvolání, které jste vystavil*a pro **${kancelar}** v **${cleanTime}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`
+    : `# 🔔 Předvolání Reminder\n\nDobrý den <@${reminderUserId}>, za **15 minut** jste předvolán*a do **${kancelar}** na čas **${cleanTime}**.\n\n> Tyto remindery lze vypnout pomoci /predvolanireminder <Výběr - Disable/Enable Notifications>\n\n👮 **Los Santos Police Department**`;
 
   if (!persistedId) {
     persistReminder({
