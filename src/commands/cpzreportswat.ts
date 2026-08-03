@@ -157,7 +157,7 @@ export const run = async ({
 
   const resolvedButton = new ButtonBuilder()
     .setCustomId("cpz_resolve")
-    .setLabel("✅ Resolved")
+    .setLabel("✅ Mark as Resolved")
     .setStyle(ButtonStyle.Success);
 
   const actionRow1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
