@@ -173,7 +173,7 @@ export const run = async ({
       `**Triggered by:** ${senderName} (<@${interaction.user.id}>)\n` +
       `**Reason:** ${reason}\n` +
       `**Timestamp:** <t:${Math.floor(Date.now() / 1000)}:F>\n\n` +
-      `**Sent to:** ${successList.length} member(s)${failCount > 0 ? ` *(${failCount} failed)*` : ""}\n`,
+      `**Sent to:** ${successList.length} members${failCount > 0 ? ` *(${failCount} failed)*` : ""}\n`,
   );
 
   const logThumbnail = new ThumbnailBuilder({ media: { url: thumbnailUrl } });
