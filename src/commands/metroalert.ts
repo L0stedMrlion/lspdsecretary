@@ -169,7 +169,7 @@ export const run = async ({
     (failCount > 0 ? `\n\n(Failed to send to ${failCount} users).` : "");
 
   const logText = new TextDisplayBuilder().setContent(
-    `# 🥷 Metro Alert — Log\n` +
+    `# 🥷 Metro Alert - Log\n` +
       `**Triggered by:** ${senderName} (<@${interaction.user.id}>)\n` +
       `**Reason:** ${reason}\n` +
       `**Timestamp:** <t:${Math.floor(Date.now() / 1000)}:F>\n\n` +
