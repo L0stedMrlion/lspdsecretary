@@ -69,7 +69,7 @@ async function editDmMessages(
 
   const resolvedTimestamp = Math.floor(Date.now() / 1000);
   const resolvedText = new TextDisplayBuilder().setContent(
-    `# ✅ Metro Alert — Resolved\nZdravím.\n\nTento Metro Alert byl označen za vyřešený od **${alert.senderName}** (<@${alert.senderUserId}>) v čase <t:${resolvedTimestamp}:F>.\n\n**Důvod alertu:** ${alert.reason}\n\nAlert byl zaslán od **${alert.senderName}** (<@${alert.senderUserId}>)\n\n**🥷 LSPD Metropolitan Division**`,
+    `# ✅ Metro Alert - Resolved\nZdravím.\n\nTento Metro Alert byl označen za vyřešený od **${alert.senderName}** (<@${alert.senderUserId}>) v čase <t:${resolvedTimestamp}:F>.\n\n**Důvod alertu:** ${alert.reason}\n\nAlert byl zaslán od **${alert.senderName}** (<@${alert.senderUserId}>)\n\n**🥷 LSPD Metropolitan Division**`,
   );
 
   const resolvedThumbnail = new ThumbnailBuilder({
@@ -181,8 +181,8 @@ export default async function (interaction: Interaction, client: Client) {
       const resolvedTimestamp = Math.floor(Date.now() / 1000);
       const newContent = currentContent
         ? currentContent.replace(
-            "# 🥷 Metro Alert — Log",
-            "# ✅ RESOLVED — Metro Alert Log",
+            "# 🥷 Metro Alert - Log",
+            "# ✅ RESOLVED - Metro Alert Log",
           ) +
           `\n**Resolved by:** <@${interaction.user.id}> (<t:${resolvedTimestamp}:F>)`
         : `✅ **Metro Alert Resolved** by <@${interaction.user.id}> (<t:${resolvedTimestamp}:F>)`;
