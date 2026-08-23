@@ -76,7 +76,7 @@ export const chatInput = async ({
 	const vehicle: string = interaction.options.getString("vehicle", true);
 	const code: string = interaction.options.getString("code", true);
 
-	const embedContent = `# 🚓 LSPD Osobní Vozidlo
+	const embedContent = `# 🚓 LSPD Osobní Vozidlo - Vaše vozidlo je připraveno k vyzvednutí!
 
 **Fr.:** <@${interaction.user.id}>
 **To.:** <@${targetUser.id}>
@@ -94,7 +94,7 @@ tímto Vám oznamujeme, že Vaše vozidlo je připraveno k vyzvednutí.
 
 ---
 
-Vozidlo si vyzvednete zadáním příkazu \`/claimvehicle\` s využitím výše uvedeného kódu. Poté jej naleznete ve své garáži. V případě komplikací mě neváhejte kontaktovat.
+Vozidlo si vyzvednete zadáním příkazu \`/claimvehicle\` s využitím výše uvedeného kódu. Poté jej naleznete ve své garáži. V případě žádosti dalších úprav či nějakých chyb kontaktujte osobu, který Vám vozidlo tímto způsobem vydal.
 
 S pozdravem
 <@${interaction.user.id}>
