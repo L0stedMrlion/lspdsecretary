@@ -5,7 +5,6 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "commandkit dev",
-    "prebuild": "node scripts/preserve-reminder-data.mjs",
     "build": "commandkit build",
     "start": "commandkit start",
     "typecheck": "tsc --noEmit",
