@@ -1,21 +1,14 @@
-import { Client, User } from "discord.js";
-import type { CommandKit } from "commandkit";
+import type { EventHandler } from "commandkit";
+import type { User } from "discord.js";
 import {
   loadAllReminders,
   removeReminder,
 } from "../../../services/predvolaniReminderStore";
 import { scheduleReminderForPredvolani } from "../../commands/(staff)/predvolani";
 
-let hasRestored = false;
+export const once = true;
 
-export default async function (
-  _c: Client<true>,
-  client: Client<true>,
-  _handler: CommandKit,
-) {
-  if (hasRestored) return;
-  hasRestored = true;
-
+const handler: EventHandler<"clientReady"> = async (readyClient) => {
   const pending = loadAllReminders();
   if (pending.length === 0) return;
 
@@ -33,8 +26,9 @@ export default async function (
     }
 
     let recipient: User | null = null;
+
     try {
-      recipient = await client.users.fetch(r.recipientId);
+      recipient = await readyClient.users.fetch(r.recipientId);
     } catch {
       console.error(
         `[PredvolaniReminder] Could not fetch user ${r.recipientId} for reminder ${r.id}`,
@@ -47,7 +41,7 @@ export default async function (
       r.reminderUserId,
       r.time,
       r.kancelar,
-      client,
+      readyClient,
       r.isIssuer,
       r.id,
       new Date(r.targetTimeMs),
@@ -57,9 +51,12 @@ export default async function (
       const fireAt = new Date(
         Math.max(r.targetTimeMs - 15 * 60 * 1000, Date.now()),
       );
+
       console.log(
         `[PredvolaniReminder] Restored reminder ${r.id} for ${r.reminderUserId} — fires at ${fireAt.toLocaleTimeString("cs-CZ", { timeZone: "Europe/Prague" })}`,
       );
     }
   }
-}
+};
+
+export default handler;
