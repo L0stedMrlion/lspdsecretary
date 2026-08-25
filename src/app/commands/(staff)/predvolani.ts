@@ -396,6 +396,7 @@ export function scheduleReminderForPredvolani(
 
   const timer = scheduleReminder(reminderUserId, targetTime, async () => {
     activeReminders.delete(key);
+    removePersisted(reminderId);
 
     try {
       const text = new TextDisplayBuilder().setContent(body);

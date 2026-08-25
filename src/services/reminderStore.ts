@@ -12,6 +12,24 @@ const STORE_PATH = path.join(
 );
 
 export const DEBUG_MODE = process.env.REMINDER_DEBUG === "true";
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
+function setLongTimeout(
+  callback: () => void,
+  targetTimeMs: number,
+): NodeJS.Timeout {
+  const scheduleNext = (): NodeJS.Timeout => {
+    const remaining = targetTimeMs - Date.now();
+
+    if (remaining > MAX_TIMEOUT_MS) {
+      return setTimeout(scheduleNext, MAX_TIMEOUT_MS);
+    }
+
+    return setTimeout(callback, Math.max(remaining, 0));
+  };
+
+  return scheduleNext();
+}
 
 function loadDisabledUsers(): Set<string> {
   try {
@@ -65,16 +83,20 @@ export function scheduleReminder(
     return setTimeout(callback, 5_000);
   }
 
-  const reminderTime = new Date(targetTime.getTime() - 15 * 60 * 1000);
-  const delay = reminderTime.getTime() - Date.now();
+  const now = Date.now();
+  const targetTimeMs = targetTime.getTime();
 
-  if (delay <= 0) {
+  if (targetTimeMs <= now) {
     console.log(`[Reminder] Skipped for ${userId} — time already passed.`);
     return null;
   }
 
+  const reminderTimeMs = Math.max(targetTimeMs - 15 * 60 * 1000, now);
+  const reminderTime = new Date(reminderTimeMs);
+  const delay = reminderTimeMs - now;
+
   console.log(
     `[Reminder] Scheduled for ${userId} at ${reminderTime.toLocaleTimeString("cs-CZ", { timeZone: "Europe/Prague" })} (in ${Math.round(delay / 1000)}s)`,
   );
-  return setTimeout(callback, delay);
+  return setLongTimeout(callback, reminderTimeMs);
 }
