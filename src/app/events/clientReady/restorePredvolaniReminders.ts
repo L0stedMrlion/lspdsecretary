@@ -24,8 +24,7 @@ export default async function (
   );
 
   for (const r of pending) {
-    const fireAt = r.targetTimeMs - 15 * 60 * 1000;
-    if (fireAt <= Date.now()) {
+    if (r.targetTimeMs <= Date.now()) {
       removeReminder(r.id);
       console.log(
         `[PredvolaniReminder] Removed expired reminder ${r.id} for ${r.reminderUserId}`,
@@ -43,8 +42,7 @@ export default async function (
       continue;
     }
 
-    const targetTime = new Date(r.targetTimeMs);
-    scheduleReminderForPredvolani(
+    const restored = scheduleReminderForPredvolani(
       recipient,
       r.reminderUserId,
       r.time,
@@ -55,8 +53,13 @@ export default async function (
       new Date(r.targetTimeMs),
     );
 
-    console.log(
-      `[PredvolaniReminder] Restored reminder ${r.id} for ${r.reminderUserId} — fires at ${targetTime.toLocaleTimeString("cs-CZ", { timeZone: "Europe/Prague" })}`,
-    );
+    if (restored) {
+      const fireAt = new Date(
+        Math.max(r.targetTimeMs - 15 * 60 * 1000, Date.now()),
+      );
+      console.log(
+        `[PredvolaniReminder] Restored reminder ${r.id} for ${r.reminderUserId} — fires at ${fireAt.toLocaleTimeString("cs-CZ", { timeZone: "Europe/Prague" })}`,
+      );
+    }
   }
 }
