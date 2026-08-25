@@ -1,7 +1,7 @@
 import type { GuildMember } from "discord.js";
 
 const GUILD_ID = "1350602855798669382";
-const ROLE_ID = "1297589335092363284";
+const ROLE_ID = "1538464877704650792";
 
 export default async function (member: GuildMember) {
   if (member.guild.id !== GUILD_ID) return;
