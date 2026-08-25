@@ -1,10 +1,11 @@
 import * as fs from "fs";
 import * as path from "path";
-import { fileURLToPath } from "url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const STORE_PATH = path.join(__dirname, "..", "data", "predvolani-reminders.json");
+const STORE_PATH = path.resolve(
+  process.cwd(),
+  "data",
+  "predvolani-reminders.json",
+);
 
 export interface PersistedPredvolaniReminder {
   id: string;
