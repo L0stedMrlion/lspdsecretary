@@ -1,17 +1,18 @@
-import * as fs from "fs";
-import * as path from "path";
-import { fileURLToPath } from "url";
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const STORE_PATH = path.join(
   __dirname,
-  "..",
-  "data",
-  "reminder-preferences.json",
+  '..',
+  '..',
+  'data',
+  'reminder-preferences.json',
 );
 
-export const DEBUG_MODE = process.env.REMINDER_DEBUG === "true";
+export const DEBUG_MODE = process.env.REMINDER_DEBUG === 'true';
 const MAX_TIMEOUT_MS = 2_147_483_647;
 
 function setLongTimeout(
@@ -35,7 +36,7 @@ function loadDisabledUsers(): Set<string> {
   try {
     fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
     if (!fs.existsSync(STORE_PATH)) return new Set();
-    const raw = fs.readFileSync(STORE_PATH, "utf-8");
+    const raw = fs.readFileSync(STORE_PATH, 'utf-8');
     return new Set(JSON.parse(raw) as string[]);
   } catch {
     return new Set();
@@ -44,7 +45,7 @@ function loadDisabledUsers(): Set<string> {
 
 function saveDisabledUsers(disabled: Set<string>): void {
   fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
-  fs.writeFileSync(STORE_PATH, JSON.stringify([...disabled]), "utf-8");
+  fs.writeFileSync(STORE_PATH, JSON.stringify([...disabled]), 'utf-8');
 }
 
 const disabledUsers = loadDisabledUsers();
@@ -78,7 +79,7 @@ export function scheduleReminder(
   if (DEBUG_MODE) {
     const label = debugLabel ?? userId;
     console.log(
-      `[Reminder DEBUG] Firing in 5s for ${label} (real target: ${targetTime.toLocaleTimeString("cs-CZ", { timeZone: "Europe/Prague" })})`,
+      `[Reminder DEBUG] Firing in 5s for ${label} (real target: ${targetTime.toLocaleTimeString('cs-CZ', { timeZone: 'Europe/Prague' })})`,
     );
     return setTimeout(callback, 5_000);
   }
@@ -96,7 +97,7 @@ export function scheduleReminder(
   const delay = reminderTimeMs - now;
 
   console.log(
-    `[Reminder] Scheduled for ${userId} at ${reminderTime.toLocaleTimeString("cs-CZ", { timeZone: "Europe/Prague" })} (in ${Math.round(delay / 1000)}s)`,
+    `[Reminder] Scheduled for ${userId} at ${reminderTime.toLocaleTimeString('cs-CZ', { timeZone: 'Europe/Prague' })} (in ${Math.round(delay / 1000)}s)`,
   );
   return setLongTimeout(callback, reminderTimeMs);
 }
