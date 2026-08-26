@@ -1,10 +1,16 @@
-import * as fs from "fs";
-import * as path from "path";
-import { fileURLToPath } from "url";
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const STORE_PATH = path.join(__dirname, "..", "data", "custom-reminders.json");
+const STORE_PATH = path.join(
+  __dirname,
+  '..',
+  '..',
+  'data',
+  'custom-reminders.json',
+);
 
 export interface CustomReminder {
   id: string;
@@ -30,7 +36,9 @@ function loadFromDisk(): PersistedCustomReminder[] {
   try {
     fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
     if (!fs.existsSync(STORE_PATH)) return [];
-    return JSON.parse(fs.readFileSync(STORE_PATH, "utf-8")) as PersistedCustomReminder[];
+    return JSON.parse(
+      fs.readFileSync(STORE_PATH, 'utf-8'),
+    ) as PersistedCustomReminder[];
   } catch {
     return [];
   }
@@ -38,7 +46,7 @@ function loadFromDisk(): PersistedCustomReminder[] {
 
 function saveToDisk(reminders: PersistedCustomReminder[]): void {
   fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
-  fs.writeFileSync(STORE_PATH, JSON.stringify(reminders, null, 2), "utf-8");
+  fs.writeFileSync(STORE_PATH, JSON.stringify(reminders, null, 2), 'utf-8');
 }
 
 export function persistCustomReminder(r: PersistedCustomReminder): void {
@@ -67,18 +75,34 @@ export function addReminder(
   targetDate: Date,
   channelId: string,
   timeout: NodeJS.Timeout,
-  forcedId?: string
+  forcedId?: string,
 ): string {
   const id = forcedId ?? String(idCounter++);
   if (!forcedId) {
     const existing = loadFromDisk();
-    const maxId = existing.reduce((max, r) => Math.max(max, parseInt(r.id, 10) || 0), 0);
+    const maxId = existing.reduce(
+      (max, r) => Math.max(max, parseInt(r.id, 10) || 0),
+      0,
+    );
     if (maxId >= idCounter) idCounter = maxId + 1;
   }
 
-  activeReminders.set(id, { id, userId, message, targetDate, channelId, timeout });
+  activeReminders.set(id, {
+    id,
+    userId,
+    message,
+    targetDate,
+    channelId,
+    timeout,
+  });
 
-  persistCustomReminder({ id, userId, message, targetDateMs: targetDate.getTime(), channelId });
+  persistCustomReminder({
+    id,
+    userId,
+    message,
+    targetDateMs: targetDate.getTime(),
+    channelId,
+  });
 
   return id;
 }
@@ -98,5 +122,7 @@ export function deleteReminderReference(id: string): void {
 }
 
 export function getUserReminders(userId: string): CustomReminder[] {
-  return Array.from(activeReminders.values()).filter((r) => r.userId === userId);
+  return Array.from(activeReminders.values()).filter(
+    (r) => r.userId === userId,
+  );
 }
