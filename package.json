@@ -4,8 +4,11 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
+    "predev": "node scripts/migrate-reminder-data.mjs",
     "dev": "commandkit dev",
+    "prebuild": "node scripts/migrate-reminder-data.mjs",
     "build": "commandkit build",
+    "prestart": "node scripts/migrate-reminder-data.mjs",
     "start": "commandkit start",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
