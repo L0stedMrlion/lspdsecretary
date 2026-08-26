@@ -1,5 +1,5 @@
 import type { EventHandler } from 'commandkit';
-import type { User } from 'discord.js';
+import type { Client, User } from 'discord.js';
 import {
   loadAllReminders,
   removeReminder,
@@ -9,6 +9,7 @@ import { scheduleReminderForPredvolani } from '../../commands/(staff)/predvolani
 export const once = true;
 
 const handler: EventHandler<'clientReady'> = async (readyClient) => {
+  const client = readyClient as unknown as Client<true>;
   const pending = loadAllReminders();
   if (pending.length === 0) return;
 
@@ -25,9 +26,9 @@ const handler: EventHandler<'clientReady'> = async (readyClient) => {
       continue;
     }
 
-    let recipient: User | null = null;
+    let recipient: User;
     try {
-      recipient = await readyClient.users.fetch(r.recipientId);
+      recipient = await client.users.fetch(r.recipientId);
     } catch {
       console.error(
         `[PredvolaniReminder] Could not fetch user ${r.recipientId} for reminder ${r.id}`,
@@ -40,7 +41,7 @@ const handler: EventHandler<'clientReady'> = async (readyClient) => {
       r.reminderUserId,
       r.time,
       r.kancelar,
-      readyClient,
+      client,
       r.isIssuer,
       r.id,
       new Date(r.targetTimeMs),
