@@ -1,6 +1,6 @@
-import { ActivityType, Client } from "discord.js";
-import type { CommandKit } from "commandkit";
-import { SYNC_RULES, TARGET_GUILD_ID } from "../../../config/roleSyncConfig";
+import { ActivityType, Client } from 'discord.js';
+import type { EventHandler } from 'commandkit';
+import { SYNC_RULES, TARGET_GUILD_ID } from '../../../config/roleSyncConfig';
 
 const ROTATE_INTERVAL_MS = 300_000;
 
@@ -9,8 +9,8 @@ function buildActivities(client: Client<true>) {
   const officerCount = lspdGuild?.memberCount ?? 0;
 
   return [
-    { name: "👮 LSPD Vespucci HQ", type: ActivityType.Watching },
-    { name: "🥷 Metro Alerts", type: ActivityType.Watching },
+    { name: '👮 LSPD Vespucci HQ', type: ActivityType.Watching },
+    { name: '🥷 Metro Alerts', type: ActivityType.Watching },
     { name: `👮 ${officerCount} Police Officers`, type: ActivityType.Watching },
     { name: `⚡ All Automatizations`, type: ActivityType.Competing },
     { name: `📊 All Divisions`, type: ActivityType.Watching },
@@ -18,21 +18,21 @@ function buildActivities(client: Client<true>) {
   ] as const;
 }
 
-export default function (
-  _c: Client<true>,
-  client: Client<true>,
-  _handler: CommandKit,
-) {
-  console.log("👮 LSPD Secretary is online.");
+export const once = true;
+
+const handler: EventHandler<'clientReady'> = (readyClient) => {
+  console.log('👮 LSPD Secretary is online.');
 
   let index = 0;
 
   const rotate = () => {
-    const activities = buildActivities(client);
-    client.user.setActivity(activities[index % activities.length]);
+    const activities = buildActivities(readyClient);
+    readyClient.user.setActivity(activities[index % activities.length]);
     index++;
   };
 
   rotate();
   setInterval(rotate, ROTATE_INTERVAL_MS);
-}
+};
+
+export default handler;
