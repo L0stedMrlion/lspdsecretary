@@ -21,13 +21,14 @@ function buildActivities(client: Client<true>) {
 export const once = true;
 
 const handler: EventHandler<'clientReady'> = (readyClient) => {
+  const client = readyClient as unknown as Client<true>;
   console.log('👮 LSPD Secretary is online.');
 
   let index = 0;
 
   const rotate = () => {
-    const activities = buildActivities(readyClient);
-    readyClient.user.setActivity(activities[index % activities.length]);
+    const activities = buildActivities(client);
+    client.user.setActivity(activities[index % activities.length]);
     index++;
   };
 
