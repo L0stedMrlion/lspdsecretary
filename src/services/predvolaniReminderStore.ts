@@ -1,10 +1,16 @@
-import * as fs from "fs";
-import * as path from "path";
-import { fileURLToPath } from "url";
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const STORE_PATH = path.join(__dirname, "..", "data", "predvolani-reminders.json");
+const STORE_PATH = path.join(
+  __dirname,
+  '..',
+  '..',
+  'data',
+  'predvolani-reminders.json',
+);
 
 export interface PersistedPredvolaniReminder {
   id: string;
@@ -20,7 +26,9 @@ function load(): PersistedPredvolaniReminder[] {
   try {
     fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
     if (!fs.existsSync(STORE_PATH)) return [];
-    return JSON.parse(fs.readFileSync(STORE_PATH, "utf-8")) as PersistedPredvolaniReminder[];
+    return JSON.parse(
+      fs.readFileSync(STORE_PATH, 'utf-8'),
+    ) as PersistedPredvolaniReminder[];
   } catch {
     return [];
   }
@@ -28,7 +36,7 @@ function load(): PersistedPredvolaniReminder[] {
 
 function save(reminders: PersistedPredvolaniReminder[]): void {
   fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
-  fs.writeFileSync(STORE_PATH, JSON.stringify(reminders, null, 2), "utf-8");
+  fs.writeFileSync(STORE_PATH, JSON.stringify(reminders, null, 2), 'utf-8');
 }
 
 export function persistReminder(reminder: PersistedPredvolaniReminder): void {
