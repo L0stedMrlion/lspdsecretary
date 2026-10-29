@@ -1,6 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { timingSafeEqual } from "node:crypto";
-import type { Client } from "discord.js";
 import { TARGET_GUILD_ID } from "../config/roleSyncConfig";
 
 const secret = process.env.OUTFIT_BRIDGE_SECRET ?? "";
@@ -26,7 +25,7 @@ function respond(response: ServerResponse, status: number, body: unknown): void 
   response.end(JSON.stringify(body));
 }
 
-export function startOutfitRoleBridge(client: Client<true>): void {
+export function startOutfitRoleBridge(getRoles: (discordId: string) => Promise<string[]>): void {
   if (secret.length < 24 || !Number.isInteger(port) || port < 1 || port > 65535) {
     console.warn("[OutfitBridge] Disabled: configure OUTFIT_BRIDGE_SECRET and a valid port");
     return;
@@ -44,17 +43,11 @@ export function startOutfitRoleBridge(client: Client<true>): void {
       return;
     }
     try {
-      const guild = await client.guilds.fetch(TARGET_GUILD_ID);
-      const member = await guild.members.fetch({ user: match[1], force: true }).catch((error: unknown) => {
-        if (error && typeof error === "object" && "code" in error && error.code === 10007) {
-          return null;
-        }
-        throw error;
-      });
+      const roles = await getRoles(match[1]);
       respond(response, 200, {
         guildId: TARGET_GUILD_ID,
         discordId: match[1],
-        roles: member ? [...member.roles.cache.keys()] : [],
+        roles,
       });
     } catch (error) {
       console.error("[OutfitBridge] Role lookup failed:", error);
