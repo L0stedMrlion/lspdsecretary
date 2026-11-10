@@ -5,6 +5,7 @@ import {
   removeReminder,
 } from '../../../services/predvolaniReminderStore';
 import { scheduleReminderForPredvolani } from '../../commands/(staff)/predvolani';
+import { isPredvolaniActive } from '../../../services/predvolaniDb';
 
 export const once = true;
 
@@ -26,6 +27,18 @@ const handler: EventHandler<'clientReady'> = async (readyClient) => {
       continue;
     }
 
+    if (r.predvolaniId !== undefined) {
+      try {
+        if (!(await isPredvolaniActive(r.predvolaniId))) {
+          removeReminder(r.id);
+          continue;
+        }
+      } catch (error) {
+        console.error(`[PredvolaniReminder] DB unavailable; skipping linked reminder ${r.id}:`, error);
+        continue;
+      }
+    }
+
     let recipient: User;
     try {
       recipient = await client.users.fetch(r.recipientId);
@@ -45,6 +58,7 @@ const handler: EventHandler<'clientReady'> = async (readyClient) => {
       r.isIssuer,
       r.id,
       new Date(r.targetTimeMs),
+      r.predvolaniId,
     );
 
     if (restored) {
