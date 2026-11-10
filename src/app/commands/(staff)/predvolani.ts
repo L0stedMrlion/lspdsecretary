@@ -114,7 +114,6 @@ export const chatInput = async ({
   const kancelar: string = interaction.options.getString("kancelar", true);
   const signiture: string = interaction.options.getString("signiture", true);
 
-  // Resolve the same time the existing reminder parser uses, then store it in Prague time.
   const appointmentDate = parseTimeToDate(time);
   if (!appointmentDate || !Number.isFinite(appointmentDate.getTime()) || appointmentDate.getTime() <= Date.now()) {
     await interaction.editReply({
@@ -172,8 +171,6 @@ ${signiture}
   let createdPredvolaniId: number | undefined;
   let delivered = false;
   try {
-    // Store the summon in the existing MySQL table before sending it. If the DB is
-    // unavailable, do not send an untracked summon that the issuer cannot cancel.
     const predvolaniId = await recordPredvolani({
       discordId: targetUser.id,
       guildNickname: nickname,
@@ -236,8 +233,6 @@ ${signiture}
       content: `✅ Předvolání bylo úspěšně odesláno pro <@${targetUser.id}> na ${time} do ${kancelar} kanceláře.${anyReminder ? " 🔔 Připomenutí bylo nastaveno 15 minut před termínem." : ""}`,
     });
   } catch (error) {
-    // Undo unannounced appointments; never leave a "ghost" active record if
-    // both publication and DM failed. If either delivered, preserve the record.
     if (createdPredvolaniId && !delivered) {
       try {
         await cancelOwnPredvolani(createdPredvolaniId, interaction.user.id);
