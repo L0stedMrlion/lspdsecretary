@@ -15,7 +15,14 @@ import { scheduleReminder } from "../../../services/reminderStore";
 import {
   persistReminder,
   removeReminder as removePersisted,
+  registerPredvolaniTimer,
+  unregisterPredvolaniTimer,
 } from "../../../services/predvolaniReminderStore";
+
+import {
+  cleanLspdNickname, getLspdMember, pragueSqlDateTime,
+  recordPredvolani, cancelOwnPredvolani, isPredvolaniActive,
+} from '../../../services/predvolaniDb';
 
 const PREDVOLANI_CHANNEL_ID: string = "1350544990576574654";
 
@@ -30,20 +37,9 @@ const AUTHORIZED_ROLES: string[] = [
   "1350407478386495518",
 ];
 
-const activeReminders = new Set<string>();
-
 function cleanTimeString(input: string): string {
   const match = input.match(/(\d{1,2}:\d{2})/);
   return match ? match[1] : input.trim();
-}
-
-function buildReminderKey(
-  userId: string,
-  time: string,
-  kancelar: string,
-  isIssuer: boolean,
-) {
-  return `${userId}-${time}-${kancelar}-${isIssuer ? "issuer" : "target"}`;
 }
 
 interface CommandRunParams {
@@ -118,11 +114,32 @@ export const chatInput = async ({
   const kancelar: string = interaction.options.getString("kancelar", true);
   const signiture: string = interaction.options.getString("signiture", true);
 
-  const currentTime = new Date().toLocaleTimeString("cs-CZ", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Prague",
-  });
+  // Resolve the same time the existing reminder parser uses, then store it in Prague time.
+  const appointmentDate = parseTimeToDate(time);
+  if (!appointmentDate || !Number.isFinite(appointmentDate.getTime()) || appointmentDate.getTime() <= Date.now()) {
+    await interaction.editReply({
+      content: '❌ Neplatný nebo již uplynulý termín. Použijte například `17:00`, `zítra 17:00` nebo `13.11.2026 17:00`.',
+    });
+    return;
+  }
+
+  let nickname: string;
+  try {
+    const lspdMember = await getLspdMember(client, targetUser.id);
+    if (!lspdMember) {
+      await interaction.editReply({
+        content: '❌ Předvolaný hráč musí být na LSPD Discordu (1348336228411375729), aby bylo možné načíst jeho přezdívku.',
+      });
+      return;
+    }
+    nickname = cleanLspdNickname(lspdMember.nickname ?? lspdMember.displayName);
+  } catch (error) {
+    console.error('Unable to fetch nickname from LSPD Discord:', error);
+    await interaction.editReply({ content: '❌ Nepodařilo se načíst člena z LSPD Discordu.' });
+    return;
+  }
+
+  const { eventDate, eventTime } = pragueSqlDateTime(appointmentDate);
 
   const embedContent = `# 👮 LSPD Předvolání
 
@@ -152,7 +169,21 @@ ${signiture}
     .addTextDisplayComponents(textComponent)
     .setThumbnailAccessory(thumbnailComponent);
 
+  let createdPredvolaniId: number | undefined;
+  let delivered = false;
   try {
+    // Store the summon in the existing MySQL table before sending it. If the DB is
+    // unavailable, do not send an untracked summon that the issuer cannot cancel.
+    const predvolaniId = await recordPredvolani({
+      discordId: targetUser.id,
+      guildNickname: nickname,
+      eventDate,
+      eventTime,
+      office: kancelar,
+      createdBy: interaction.user.id,
+    });
+    createdPredvolaniId = predvolaniId;
+
     const channel = (await client.channels.fetch(
       PREDVOLANI_CHANNEL_ID,
     )) as TextChannel;
@@ -162,6 +193,7 @@ ${signiture}
         flags: MessageFlags.IsComponentsV2,
         components: [sectionComponent],
       });
+      delivered = true;
     }
 
     try {
@@ -169,6 +201,7 @@ ${signiture}
         flags: MessageFlags.IsComponentsV2,
         components: [sectionComponent],
       });
+      delivered = true;
     } catch (dmError) {
       console.error(`Failed to send DM to user ${targetUser.id}:`, dmError);
     }
@@ -180,6 +213,9 @@ ${signiture}
       kancelar,
       client,
       false,
+      undefined,
+      appointmentDate,
+      predvolaniId,
     );
 
     const issuerReminder = scheduleReminderForPredvolani(
@@ -189,6 +225,9 @@ ${signiture}
       kancelar,
       client,
       true,
+      undefined,
+      appointmentDate,
+      predvolaniId,
     );
 
     const anyReminder = targetReminder || issuerReminder;
@@ -197,6 +236,15 @@ ${signiture}
       content: `✅ Předvolání bylo úspěšně odesláno pro <@${targetUser.id}> na ${time} do ${kancelar} kanceláře.${anyReminder ? " 🔔 Připomenutí bylo nastaveno 15 minut před termínem." : ""}`,
     });
   } catch (error) {
+    // Undo unannounced appointments; never leave a "ghost" active record if
+    // both publication and DM failed. If either delivered, preserve the record.
+    if (createdPredvolaniId && !delivered) {
+      try {
+        await cancelOwnPredvolani(createdPredvolaniId, interaction.user.id);
+      } catch (rollbackError) {
+        console.error('Unable to roll back unpublished předvolání:', rollbackError);
+      }
+    }
     console.error("Error sending předvolání:", error);
     await interaction.editReply({
       content: "❌ Došlo k chybě při odesílání předvolání.",
@@ -252,7 +300,7 @@ function buildPragueDate(
   return new Date(utcMs);
 }
 
-function parseTimeToDate(timeStr: string): Date | null {
+export function parseTimeToDate(timeStr: string): Date | null {
   const now = new Date();
   const p = getPragueNowParts(now);
   const normalized = timeStr.trim().toLowerCase();
@@ -358,23 +406,14 @@ export function scheduleReminderForPredvolani(
   isIssuer: boolean = false,
   persistedId?: string,
   overrideTargetTime?: Date,
+  predvolaniId?: number,
 ): boolean {
   const targetTime = overrideTargetTime ?? parseTimeToDate(time);
   if (!targetTime) return false;
 
-  const key = buildReminderKey(reminderUserId, time, kancelar, isIssuer);
   const reminderId =
     persistedId ??
     `${reminderUserId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-
-  if (activeReminders.has(key)) {
-    if (!persistedId) {
-      removePersisted(reminderId);
-    }
-    return false;
-  }
-
-  activeReminders.add(key);
 
   const cleanTime = cleanTimeString(time);
 
@@ -391,12 +430,22 @@ export function scheduleReminderForPredvolani(
       kancelar,
       isIssuer,
       targetTimeMs: targetTime.getTime(),
+      predvolaniId,
     });
   }
 
   const timer = scheduleReminder(reminderUserId, targetTime, async () => {
-    activeReminders.delete(key);
+    unregisterPredvolaniTimer(reminderId);
     removePersisted(reminderId);
+    // A cancellation might race a reminder timer. Check the DB before sending.
+    if (predvolaniId !== undefined) {
+      try {
+        if (!(await isPredvolaniActive(predvolaniId))) return;
+      } catch (error) {
+        console.error(`Unable to check status for summon ${predvolaniId}:`, error);
+        return; // fail closed; never send a possibly cancelled reminder
+      }
+    }
 
     try {
       const text = new TextDisplayBuilder().setContent(body);
@@ -421,11 +470,11 @@ export function scheduleReminderForPredvolani(
   });
 
   if (timer === null) {
-    activeReminders.delete(key);
     removePersisted(reminderId);
     return false;
   }
 
+  registerPredvolaniTimer(reminderId, timer);
   return true;
 }
 
