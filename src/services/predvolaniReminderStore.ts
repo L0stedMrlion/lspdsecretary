@@ -20,6 +20,7 @@ export interface PersistedPredvolaniReminder {
   kancelar: string;
   isIssuer: boolean;
   targetTimeMs: number;
+  predvolaniId?: number;
 }
 
 function load(): PersistedPredvolaniReminder[] {
@@ -52,4 +53,29 @@ export function removeReminder(id: string): void {
 
 export function loadAllReminders(): PersistedPredvolaniReminder[] {
   return load();
+}
+
+const runningReminders = new Map<string, NodeJS.Timeout>();
+
+export function registerPredvolaniTimer(id: string, timer: NodeJS.Timeout): void {
+  const old = runningReminders.get(id);
+  if (old) clearTimeout(old);
+  runningReminders.set(id, timer);
+}
+
+export function unregisterPredvolaniTimer(id: string): void {
+  runningReminders.delete(id);
+}
+
+export function cancelRemindersForPredvolani(predvolaniId: number): void {
+  const all = load();
+  const removed = all.filter((r) => r.predvolaniId === predvolaniId);
+  for (const reminder of removed) {
+    const timer = runningReminders.get(reminder.id);
+    if (timer) clearTimeout(timer);
+    runningReminders.delete(reminder.id);
+  }
+  if (removed.length > 0) {
+    save(all.filter((r) => r.predvolaniId !== predvolaniId));
+  }
 }
