@@ -14,7 +14,7 @@ export const command = new SlashCommandBuilder()
   .setName('zrusitpredvolani')
   .setDescription('Cancel own summons')
   .addStringOption((option) => option
-    .setName('predvolani')
+    .setName('user')
     .setDescription('Choose a user that you want to de-summon')
     .setRequired(true)
     .setAutocomplete(true))
