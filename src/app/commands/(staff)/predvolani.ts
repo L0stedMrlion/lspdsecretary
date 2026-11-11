@@ -170,8 +170,11 @@ ${signiture}
 
   let createdPredvolaniId: number | undefined;
   let delivered = false;
+  let phase: 'database' | 'discord' = 'database';
+
   try {
-    const predvolaniId = await recordPredvolani({
+    // Create the entry first: no untracked summon may be published.
+    createdPredvolaniId = await recordPredvolani({
       discordId: targetUser.id,
       guildNickname: nickname,
       eventDate,
@@ -179,18 +182,21 @@ ${signiture}
       office: kancelar,
       createdBy: interaction.user.id,
     });
-    createdPredvolaniId = predvolaniId;
 
-    const channel = (await client.channels.fetch(
-      PREDVOLANI_CHANNEL_ID,
-    )) as TextChannel;
-
-    if (channel) {
-      await channel.send({
-        flags: MessageFlags.IsComponentsV2,
-        components: [sectionComponent],
-      });
-      delivered = true;
+    phase = 'discord';
+    try {
+      const channel = await client.channels.fetch(PREDVOLANI_CHANNEL_ID);
+      if (channel && channel.isTextBased() && 'send' in channel) {
+        await channel.send({
+          flags: MessageFlags.IsComponentsV2,
+          components: [sectionComponent],
+        });
+        delivered = true;
+      } else {
+        console.error('[predvolani] Destination channel does not support sending messages:', PREDVOLANI_CHANNEL_ID);
+      }
+    } catch (channelError) {
+      console.error('[predvolani] Failed to publish to channel:', channelError);
     }
 
     try {
@@ -200,52 +206,88 @@ ${signiture}
       });
       delivered = true;
     } catch (dmError) {
-      console.error(`Failed to send DM to user ${targetUser.id}:`, dmError);
+      console.error(`[predvolani] DM failed for user ${targetUser.id}:`, dmError);
     }
 
-    const targetReminder = scheduleReminderForPredvolani(
-      targetUser,
-      targetUser.id,
-      time,
-      kancelar,
-      client,
-      false,
-      undefined,
-      appointmentDate,
-      predvolaniId,
-    );
+    if (!delivered) {
+      throw Object.assign(new Error('Both channel message and direct message failed'), {
+        code: 'PREDVOLANI_NO_DELIVERY',
+      });
+    }
 
-    const issuerReminder = scheduleReminderForPredvolani(
-      interaction.user,
-      interaction.user.id,
-      time,
-      kancelar,
-      client,
-      true,
-      undefined,
-      appointmentDate,
-      predvolaniId,
-    );
-
-    const anyReminder = targetReminder || issuerReminder;
+    let targetReminder = false;
+    let issuerReminder = false;
+    try {
+      targetReminder = scheduleReminderForPredvolani(
+        targetUser, targetUser.id, time, kancelar, client,
+        false, undefined, appointmentDate, createdPredvolaniId,
+      );
+    } catch (error) {
+      console.error('[predvolani] Failed to schedule recipient reminder:', error);
+    }
+    try {
+      issuerReminder = scheduleReminderForPredvolani(
+        interaction.user, interaction.user.id, time, kancelar, client,
+        true, undefined, appointmentDate, createdPredvolaniId,
+      );
+    } catch (error) {
+      console.error('[predvolani] Failed to schedule issuer reminder:', error);
+    }
 
     await interaction.editReply({
-      content: `✅ Předvolání bylo úspěšně odesláno pro <@${targetUser.id}> na ${time} do ${kancelar} kanceláře.${anyReminder ? " 🔔 Připomenutí bylo nastaveno 15 minut před termínem." : ""}`,
+      content: `✅ Předvolání bylo úspěšně odesláno pro <@${targetUser.id}> na ${time} do ${kancelar} kanceláře.${targetReminder || issuerReminder ? ' 🔔 Připomenutí bylo nastaveno 15 minut před termínem.' : ''}`,
     });
   } catch (error) {
     if (createdPredvolaniId && !delivered) {
       try {
         await cancelOwnPredvolani(createdPredvolaniId, interaction.user.id);
       } catch (rollbackError) {
-        console.error('Unable to roll back unpublished předvolání:', rollbackError);
+        console.error('[predvolani] Unable to roll back unpublished summons:', rollbackError);
       }
     }
-    console.error("Error sending předvolání:", error);
-    await interaction.editReply({
-      content: "❌ Došlo k chybě při odesílání předvolání.",
-    });
+    console.error(`[predvolani] ${phase} failure:`, error);
+    const errorCode = getPredvolaniErrorCode(error);
+    const reply = phase === 'database'
+      ? `❌ Předvolání nebylo odesláno: chyba databáze (${errorCode}). ${databaseErrorHint(errorCode)}`
+      : `❌ Předvolání se nepodařilo doručit ani do kanálu, ani do DM (${errorCode}). Podrobnosti jsou v logu bota.`;
+    await interaction.editReply({ content: reply });
   }
 };
+
+function getPredvolaniErrorCode(error: unknown): string {
+  const candidate = error as { code?: unknown } | null;
+  return candidate && typeof candidate.code === 'string'
+    ? candidate.code.slice(0, 50)
+    : error instanceof Error && error.message.includes('Missing DB_USER or DB_NAME')
+      ? 'DB_CONFIG_MISSING'
+      : 'UNKNOWN';
+}
+
+function databaseErrorHint(code: string): string {
+  switch (code) {
+    case 'DB_CONFIG_MISSING':
+      return 'Nastavte DB_USER a DB_NAME v prostředí kontejneru nebo v jeho .env.';
+    case 'ECONNREFUSED':
+    case 'ETIMEDOUT':
+    case 'ENOTFOUND':
+    case 'EHOSTUNREACH':
+      return 'Zkontrolujte DB_HOST/IP a DB_PORT. 127.0.0.1 v Dockeru označuje samotný kontejner.';
+    case 'ER_ACCESS_DENIED_ERROR':
+      return 'Zkontrolujte DB_USER, DB_PASSWORD a oprávnění databázového účtu.';
+    case 'ER_BAD_DB_ERROR':
+    case 'ER_NO_DB_ERROR':
+      return 'Zkontrolujte DB_NAME a existenci databáze.';
+    case 'ER_NO_SUCH_TABLE':
+    case 'ER_BAD_FIELD_ERROR':
+    case 'ER_NO_DEFAULT_FOR_FIELD':
+      return 'Zkontrolujte tabulku lion_predvolani a její sloupce.';
+    case 'ER_TABLEACCESS_DENIED_ERROR':
+    case 'ER_DBACCESS_DENIED_ERROR':
+      return 'Databázový uživatel nemá potřebná práva pro tabulku lion_predvolani.';
+    default:
+      return 'Podrobnosti najdete v logu lspdsecretary pod [predvolani].';
+  }
+}
 
 function getPragueNowParts(now: Date): {
   year: number;
@@ -432,7 +474,6 @@ export function scheduleReminderForPredvolani(
   const timer = scheduleReminder(reminderUserId, targetTime, async () => {
     unregisterPredvolaniTimer(reminderId);
     removePersisted(reminderId);
-    // A cancellation might race a reminder timer. Check the DB before sending.
     if (predvolaniId !== undefined) {
       try {
         if (!(await isPredvolaniActive(predvolaniId))) return;
