@@ -26,7 +26,7 @@ export interface PredvolaniRecord extends RowDataPacket {
 export function cleanLspdNickname(nickname: string): string {
   return nickname
     .replace(/^\s*(?:\[[^\]\r\n]{1,35}\]\s*)+/u, '')
-    .replace(/\s*\(\s*\d{1,10}\s*\)\s*$/u, '')
+    .replace(/(?:\s*\([^()\r\n]{1,64}\)\s*)+$/u, '')
     .replace(/\s+/gu, ' ')
     .trim() || nickname.trim();
 }
