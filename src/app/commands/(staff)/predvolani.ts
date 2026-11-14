@@ -50,23 +50,23 @@ interface CommandRunParams {
 
 export const command = new SlashCommandBuilder()
   .setName("predvolani")
-  .setDescription("Sends LSPD Předvolání")
+  .setDescription("Issue an official LSPD summons to a member")
   .addUserOption((option) =>
-    option.setName("user").setDescription("Officer name").setRequired(true),
+    option.setName("user").setDescription("Select the member who will receive the summons").setRequired(true),
   )
   .addStringOption((option) =>
-    option.setName("time").setDescription("Time for visit").setRequired(true),
+    option.setName("time").setDescription("Appointment date and time (e.g. 17:00 or zítra 17:00)").setRequired(true),
   )
   .addStringOption((option) =>
     option
-      .setName("signiture")
-      .setDescription("Your signiture as LSPD member")
+      .setName("signature")
+      .setDescription("Your name and rank as the officer issuing the summons")
       .setRequired(true),
   )
   .addStringOption((option) =>
     option
       .setName("kancelar")
-      .setDescription("Office type")
+      .setDescription("Select the office where the member must report")
       .setRequired(true)
       .addChoices(
         { name: "Chief Office", value: "Chief Office" },
@@ -112,7 +112,7 @@ export const chatInput = async ({
   const targetUser: User = interaction.options.getUser("user", true);
   const time: string = interaction.options.getString("time", true);
   const kancelar: string = interaction.options.getString("kancelar", true);
-  const signiture: string = interaction.options.getString("signiture", true);
+  const signiture: string = interaction.options.getString("signature") ?? interaction.options.getString("signiture") ?? "";
 
   const appointmentDate = parseTimeToDate(time);
   if (!appointmentDate || !Number.isFinite(appointmentDate.getTime()) || appointmentDate.getTime() <= Date.now()) {
