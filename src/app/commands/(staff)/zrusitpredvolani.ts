@@ -12,10 +12,10 @@ import { cancelRemindersForPredvolani } from '../../../services/predvolaniRemind
 
 export const command = new SlashCommandBuilder()
   .setName('zrusitpredvolani')
-  .setDescription('Cancel own summons')
+  .setDescription('Cancel an active LSPD summons that you issued')
   .addStringOption((option) => option
-    .setName('user')
-    .setDescription('Choose a user that you want to de-summon')
+    .setName('predvolani')
+    .setDescription('Select the summons to cancel by recipient name and appointment time')
     .setRequired(true)
     .setAutocomplete(true))
   .toJSON();
@@ -88,9 +88,9 @@ export const chatInput = async ({ interaction, client }: {
 
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-  const raw = interaction.options.getString('predvolani', true);
+  const raw = interaction.options.getString('predvolani') ?? interaction.options.getString('user');
   const id = Number(raw);
-  if (!/^\d{1,15}$/.test(raw) || !Number.isSafeInteger(id) || id <= 0) {
+  if (!raw || !/^\d{1,15}$/.test(raw) || !Number.isSafeInteger(id) || id <= 0) {
     await interaction.editReply({ content: '❌ Vyberte předvolání z nabídky.' });
     return;
   }
