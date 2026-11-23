@@ -1,7 +1,7 @@
 import { LSPD_GUILD_ID } from './constants';
 
 export const SHIFT_GUILD_ID = LSPD_GUILD_ID;
-export const SHIFT_CHANNEL_ID = process.env.SHIFT_REPORT_CHANNEL_ID || '1350406951967785014';
+export const SHIFT_CHANNEL_ID = process.env.SHIFT_REPORT_CHANNEL_ID || '1574442096960606258';
 export const SHIFT_TIME_ZONE = 'Europe/Prague';
 export const SHIFT_JOB = 'police';
 export const SHIFT_MIN_PATROL_SECONDS = 300;
