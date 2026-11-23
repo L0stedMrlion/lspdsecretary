@@ -5,7 +5,7 @@ import {
 } from 'discord.js';
 import { LSPD_GUILD_ID } from '../../../config/constants';
 import {
-  cancelOwnPredvolani, cleanLspdNickname, czechDate,
+  cancelOwnUpcomingPredvolani, cleanLspdNickname, czechDate,
   getOwnActivePredvolani, listOwnActivePredvolani,
 } from '../../../services/predvolaniDb';
 import { cancelRemindersForPredvolani } from '../../../services/predvolaniReminderStore';
@@ -32,12 +32,12 @@ async function choices(interaction: AutocompleteInteraction): Promise<void> {
       ));
     }
 
+    const formatLabel = (entry: (typeof entries)[number]) =>
+      `${cachedNames.get(entry.discord_id)} - ${czechDate(entry.event_date)} ${entry.event_time.slice(0, 5)}`;
     const query = interaction.options.getFocused().trim().toLocaleLowerCase('cs-CZ');
-    const matches = entries.filter((entry) => {
-      const label = `${cachedNames.get(entry.discord_id)} - ${entry.event_time.slice(0, 5)}`;
-      return !query || label.toLocaleLowerCase('cs-CZ').includes(query) ||
-        czechDate(entry.event_date).includes(query);
-    }).slice(0, 25);
+    const matches = entries.filter((entry) =>
+      !query || formatLabel(entry).toLocaleLowerCase('cs-CZ').includes(query)
+    ).slice(0, 25);
 
     if (guild && matches.length > 0) {
       await Promise.race([
@@ -50,20 +50,10 @@ async function choices(interaction: AutocompleteInteraction): Promise<void> {
       ]);
     }
 
-    const seen = new Map<string, number>();
-    for (const entry of matches) {
-      const key = `${cachedNames.get(entry.discord_id)} - ${entry.event_time.slice(0, 5)}`;
-      seen.set(key, (seen.get(key) ?? 0) + 1);
-    }
-    await interaction.respond(matches.map((entry) => {
-      const label = `${cachedNames.get(entry.discord_id)} - ${entry.event_time.slice(0, 5)}`;
-      return {
-        name: (seen.get(label) ?? 0) > 1
-          ? `${label} (${czechDate(entry.event_date)})`.slice(0, 100)
-          : label.slice(0, 100),
-        value: String(entry.id),
-      };
-    }));
+    await interaction.respond(matches.map((entry) => ({
+      name: formatLabel(entry).slice(0, 100),
+      value: String(entry.id),
+    })));
   } catch (error) {
     console.error('[zrusitpredvolani] autocomplete failed:', error);
     if (!interaction.responded) await interaction.respond([]).catch(() => undefined);
@@ -99,14 +89,14 @@ export const chatInput = async ({ interaction, client }: {
     const entry = await getOwnActivePredvolani(id, interaction.user.id);
     if (!entry) {
       await interaction.editReply({
-        content: '❌ Předvolání již není aktivní nebo jste ho nevytvořili vy.',
+        content: '❌ Předvolání již proběhlo, bylo zrušeno nebo jste ho nevytvořili vy.',
       });
       return;
     }
 
-    const cancelled = await cancelOwnPredvolani(id, interaction.user.id);
+    const cancelled = await cancelOwnUpcomingPredvolani(id, interaction.user.id);
     if (!cancelled) {
-      await interaction.editReply({ content: '❌ Předvolání již bylo zrušeno nebo není vaše.' });
+      await interaction.editReply({ content: '❌ Předvolání již proběhlo, bylo zrušeno nebo není vaše.' });
       return;
     }
 
@@ -134,7 +124,7 @@ export const chatInput = async ({ interaction, client }: {
     }
 
     await interaction.editReply({
-      content: `✅ Předvolání **${name} - ${entry.event_time.slice(0, 5)}** bylo zrušeno. ` +
+      content: `✅ Předvolání **${name} - ${czechDate(entry.event_date)} ${entry.event_time.slice(0, 5)}** bylo zrušeno. ` +
         (sent ? 'Hráči bylo odesláno oznámení do DM.' : '⚠️ Hráči se nepodařilo doručit DM.'),
     });
   } catch (error) {

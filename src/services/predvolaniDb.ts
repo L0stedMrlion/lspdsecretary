@@ -113,12 +113,20 @@ export async function recordPredvolani(input: {
 const fields = `id, discord_id, guild_nickname,
   DATE_FORMAT(event_date, '%Y-%m-%d') AS event_date, event_time, reason`;
 
+const upcomingPredvolaniSql = '(event_date > ? OR (event_date = ? AND event_time > ?))';
+
+function upcomingPredvolaniParams(): [string, string, string] {
+  const { eventDate, eventTime } = pragueSqlDateTime(new Date());
+  return [eventDate, eventDate, eventTime];
+}
+
 export async function listOwnActivePredvolani(issuerId: string): Promise<PredvolaniRecord[]> {
   await ensurePredvolaniTable();
   const [rows] = await pool.execute<PredvolaniRecord[]>(
     `SELECT ${fields} FROM lion_predvolani WHERE status = 'active' AND created_by = ?
+      AND ${upcomingPredvolaniSql}
       ORDER BY event_date, event_time, id LIMIT 500`,
-    [issuerId],
+    [issuerId, ...upcomingPredvolaniParams()],
   );
   return rows;
 }
@@ -127,8 +135,9 @@ export async function getOwnActivePredvolani(id: number, issuerId: string): Prom
   await ensurePredvolaniTable();
   const [rows] = await pool.execute<PredvolaniRecord[]>(
     `SELECT ${fields} FROM lion_predvolani
-      WHERE id = ? AND created_by = ? AND status = 'active' LIMIT 1`,
-    [id, issuerId],
+      WHERE id = ? AND created_by = ? AND status = 'active'
+        AND ${upcomingPredvolaniSql} LIMIT 1`,
+    [id, issuerId, ...upcomingPredvolaniParams()],
   );
   return rows[0] ?? null;
 }
@@ -139,6 +148,16 @@ export async function cancelOwnPredvolani(id: number, issuerId: string): Promise
     `UPDATE lion_predvolani SET status='cancelled', cancelled_by=?, cancelled_at=CURRENT_TIMESTAMP
       WHERE id=? AND created_by=? AND status='active'`,
     [issuerId, id, issuerId],
+  );
+  return result.affectedRows === 1;
+}
+
+export async function cancelOwnUpcomingPredvolani(id: number, issuerId: string): Promise<boolean> {
+  await ensurePredvolaniTable();
+  const [result] = await pool.execute<ResultSetHeader>(
+    `UPDATE lion_predvolani SET status='cancelled', cancelled_by=?, cancelled_at=CURRENT_TIMESTAMP
+      WHERE id=? AND created_by=? AND status='active' AND ${upcomingPredvolaniSql}`,
+    [issuerId, id, issuerId, ...upcomingPredvolaniParams()],
   );
   return result.affectedRows === 1;
 }
