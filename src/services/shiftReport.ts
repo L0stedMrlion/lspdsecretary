@@ -191,9 +191,9 @@ export function buildShiftReportComponents(report: ShiftReportSnapshot) {
 
   const medals = ['🥇', '🥈', '🥉'];
   const officers = report.topOfficers.map((officer, index) =>
-    medals[index] + ' **' + safeName(officer.name) + '** - ' +
-    formatDuration(officer.seconds) + '  (  ' +
-    officer.patrols + (officer.patrols === 1 ? ' patrol' : ' patrols)'),
+    medals[index] + ' **' + safeName(officer.name) + '** — ' +
+    formatDuration(officer.seconds) + ' (' +
+    officer.patrols + (officer.patrols === 1 ? ' patrol)' : ' patrols)'),
   );
 
   const leaderboard = new TextDisplayBuilder().setContent(
