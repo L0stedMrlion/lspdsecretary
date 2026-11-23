@@ -144,6 +144,13 @@ function formatDuration(seconds: number): string {
   return Math.floor(minutes / 60) + 'h ' + String(minutes % 60).padStart(2, '0') + 'm';
 }
 
+function formatComparisonDuration(seconds: number): string {
+  const totalMinutes = Math.floor(Math.max(0, seconds) / 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return '(' + hours + 'h' + (minutes ? ' ' + minutes + 'm' : '') + ')';
+}
+
 function formatTrend(current: number, previous: number): string {
   if (previous === 0) return current === 0 ? '⚪ 0.0% (no change)' : '⚪ N/A (no previous activity)';
   const percent = ((current - previous) / previous) * 100;
@@ -161,8 +168,7 @@ export function buildShiftReportComponents(report: ShiftReportSnapshot) {
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
         '# 👮 LSPD | Daily Shift Report\n' +
-        '**' + displayDate(report.date) + '**\n' +
-        '-# Los Santos Police Department',
+        '**' + displayDate(report.date) + '**',
       ),
     )
     .setThumbnailAccessory(new ThumbnailBuilder({ media: { url: SHIFT_LOGO_URL } }));
@@ -178,9 +184,9 @@ export function buildShiftReportComponents(report: ShiftReportSnapshot) {
   const comparisons = new TextDisplayBuilder().setContent(
     '### 📈 Activity Comparison\n' +
     '**Previous day:** ' + formatTrend(report.totalSeconds, report.previousDaySeconds) +
-    '  •  ' + formatDuration(report.previousDaySeconds) + '\n' +
+    ' ' + formatComparisonDuration(report.previousDaySeconds) + '\n' +
     '**Same day last week:** ' + formatTrend(report.totalSeconds, report.previousWeekSeconds) +
-    '  •  ' + formatDuration(report.previousWeekSeconds),
+    ' ' + formatComparisonDuration(report.previousWeekSeconds),
   );
 
   const medals = ['🥇', '🥈', '🥉'];
