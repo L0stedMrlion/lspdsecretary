@@ -196,6 +196,7 @@ export async function processMeetings(client: Client) {
         if (m.delivery === 'sending') {
           m.delivery = 'uncertain'; save(store);
           console.error('[Meetings] Interrupted delivery, inspect channel:', cycle.date, kind);
+          try { await (await client.users.fetch(PRIMARY)).send('⚠️ Odeslání bylo přerušeno restartem: ' + CONFIG[kind].label + '. Zkontrolujte kanál ručně.'); } catch {}
         }
         try { await deliver(client, store, cycle, kind); }
         catch (error) { console.error('[Meetings] Publish failed before send:', error); }
@@ -252,7 +253,7 @@ export async function handleMeetingInteraction(interaction: Interaction) {
       }
       changes = { time, place, extra };
     } else if (action === 'save' || !interaction.isButton()) return;
-    if (interaction.isButton()) await interaction.deferUpdate();
+    if (interaction.isButton() || (interaction.isModalSubmit() && interaction.isFromMessage())) await interaction.deferUpdate();
     else await interaction.deferReply(interaction.inGuild() ? { flags: MessageFlags.Ephemeral } : {});
     await serialized(async () => {
       const store = load();
@@ -262,14 +263,20 @@ export async function handleMeetingInteraction(interaction: Interaction) {
       }
       for (const kind of kinds) {
         const m = current.meetings[kind];
-        if (changes) Object.assign(m, changes);
-        else m.status = action === 'approve' ? 'approved' : 'cancelled';
-        m.by = actor;
-        m.at = new Date().toISOString();
+        if (changes) {
+          Object.assign(m, changes);
+          m.status = 'pending';
+          delete m.by;
+          delete m.at;
+        } else {
+          m.status = action === 'approve' ? 'approved' : 'cancelled';
+          m.by = actor;
+          m.at = new Date().toISOString();
+        }
         console.log('[Meetings] Decision', date, kind, action, actor);
       }
       save(store);
-      if (interaction.isButton()) await interaction.editReply(panel(current, actor === PRIMARY ? [...TYPES] : current.backup?.kinds || current.escalation || [], actor));
+      if (interaction.isButton() || (interaction.isModalSubmit() && interaction.isFromMessage())) await interaction.editReply(panel(current, actor === PRIMARY ? [...TYPES] : current.backup?.kinds || current.escalation || [], actor));
       else await interaction.editReply('Úpravy uloženy. Pro odeslání je nutné poradu schválit.');
       await refresh(interaction.client, current);
     });
@@ -287,7 +294,6 @@ export async function showMeetingCommand(interaction: ChatInputCommandInteractio
   await serialized(async () => {
     const clock = meetingClock();
     let date = new Date(clock.friday + 'T00:00:00Z');
-    if (clock.weekday === 6) date.setUTCDate(date.getUTCDate() + 7);
     while (meetingClock(new Date(date.getTime() + 12 * 3600000)).week % 2) date.setUTCDate(date.getUTCDate() + 7);
     const store = load();
     const cycle = getCycle(store, date.toISOString().slice(0, 10));
