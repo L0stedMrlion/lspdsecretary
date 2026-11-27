@@ -76,7 +76,7 @@ function open(cycle: Cycle, now = new Date()) {
 }
 function allowed(cycle: Cycle, actor: string, kind: Kind) {
   if (!open(cycle)) return false;
-  return actor === PRIMARY || (actor === BACKUP && !!cycle.escalation?.includes(kind));
+  return actor === PRIMARY || (actor === BACKUP && !!cycle.escalation?.includes(kind) && cycle.meetings[kind].by !== PRIMARY);
 }
 function announcement(cycle: Cycle, kind: Kind) {
   const m = cycle.meetings[kind];
@@ -188,7 +188,7 @@ export async function processMeetings(client: Client) {
           cycle.notified = true; save(store);
         } catch (error) { console.error('[Meetings] Deadline DM failed:', error); }
       }
-      if (clock.minute < 450) return;
+      if (clock.minute < 450 || clock.minute >= 480) return;
       for (const kind of TYPES) {
         const m = cycle.meetings[kind];
         const [h, min] = m.time.split(':').map(Number);
@@ -276,7 +276,10 @@ export async function handleMeetingInteraction(interaction: Interaction) {
         console.log('[Meetings] Decision', date, kind, action, actor);
       }
       save(store);
-      if (interaction.isButton() || (interaction.isModalSubmit() && interaction.isFromMessage())) await interaction.editReply(panel(current, actor === PRIMARY ? [...TYPES] : current.backup?.kinds || current.escalation || [], actor));
+      if (interaction.isButton() || (interaction.isModalSubmit() && interaction.isFromMessage())) {
+        await interaction.editReply(panel(current, actor === PRIMARY ? [...TYPES] : current.backup?.kinds || current.escalation || [], actor));
+        if (changes) await respond(interaction, 'Úpravy uloženy. Pro odeslání je nutné poradu znovu schválit.');
+      }
       else await interaction.editReply('Úpravy uloženy. Pro odeslání je nutné poradu schválit.');
       await refresh(interaction.client, current);
     });
