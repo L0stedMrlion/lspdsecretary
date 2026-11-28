@@ -4,7 +4,6 @@ import {
   ActionRowBuilder, ButtonBuilder, ButtonStyle, ContainerBuilder, TextDisplayBuilder,
   SeparatorBuilder, MessageFlags, ModalBuilder, TextInputBuilder, TextInputStyle,
   type Client, type Interaction, type ButtonInteraction, type ModalSubmitInteraction,
-  type ChatInputCommandInteraction,
 } from 'discord.js';
 import { LSPD_GUILD_ID } from '../config/constants';
 
@@ -288,7 +287,16 @@ export async function handleMeetingInteraction(interaction: Interaction) {
     try { await respond(interaction, 'Nepodařilo se provést akci.'); } catch {}
   }
 }
-export async function showMeetingCommand(interaction: ChatInputCommandInteraction) {
+type MeetingCommandInteraction = {
+  user: { id: string };
+  guildId: string | null;
+  inGuild(): boolean;
+  reply(options: any): Promise<any>;
+  deferReply(options?: any): Promise<any>;
+  editReply(options: any): Promise<any>;
+};
+
+export async function showMeetingCommand(interaction: MeetingCommandInteraction) {
   const actor = interaction.user.id;
   if ((actor !== PRIMARY && actor !== BACKUP) || (interaction.guildId && interaction.guildId !== LSPD_GUILD_ID)) {
     await interaction.reply({ content: 'Nemáte oprávnění.', ...(interaction.inGuild() ? { flags: MessageFlags.Ephemeral as const } : {}) }); return;
